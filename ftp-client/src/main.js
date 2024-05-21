@@ -14,4 +14,4 @@ const baseAxios = axios.create({
 
 const app = createApp(App)
 app.config.globalProperties.$http = baseAxios
-app.use(router).use(PrimeVue, {unstyled: true}).mount('#app')
+app.use(router, PrimeVue).mount('#app')

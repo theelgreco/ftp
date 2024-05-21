@@ -43,7 +43,7 @@ exports.postConnect = async (request, response) => {
 
 exports.getFiles = async (request, response) => {
     const {sessionid} = request.headers
-    let {path} = request.body
+    let {path} = request.query
 
     try {
         const session = getSession(sessionid)

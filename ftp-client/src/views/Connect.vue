@@ -39,7 +39,7 @@
       <div v-else-if="error"
            class="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full h-full bg-white flex flex-col justify-center items-center gap-3 text-gray-400">
         <i class="mdi mdi-alpha-x-circle-outline text-red-500 text-[250px] max-h-[250px] flex items-center"/>
-        <p class="text-gray-400">Couldn't connect to <span class="text-gray-600">{{ form.host }}</span></p>
+        <p class="text-gray-400">Failed to connect to <span class="text-gray-600">{{ form.host }}</span></p>
         <button
             class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 transition rounded py-3 px-8 w-fit text-white mx-auto mt-12"
             @click="error = false">
@@ -93,7 +93,7 @@ export default {
         isSuccessful = true
 
         setTimeout(() => {
-          router.push("/")
+          router.push("/files")
         }, 2000)
       } catch (err) {
         console.error(err)
