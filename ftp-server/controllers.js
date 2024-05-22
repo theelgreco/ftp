@@ -34,7 +34,9 @@ exports.postConnect = async (request, response) => {
     try {
         validate(validData, request.body)
         const cleanedData = clean(validData, request.body)
+
         const {slug, timestamp, options} = await createSession(cleanedData)
+
         response.status(200).send({slug, timestamp, options})
     } catch (err) {
         console.error(err)
@@ -43,42 +45,103 @@ exports.postConnect = async (request, response) => {
 }
 
 exports.getFiles = async (request, response) => {
+    const validData = {
+        path: {
+            type: String,
+            required: false
+        }
+    }
+
     const {sessionid} = request.headers
-    let {path} = request.query
 
     try {
         const session = getSession(sessionid)
+        validData.path.default = await session.client.pwd()
 
-        if (!path) {
-            path = await session.client.pwd()
-        }
+        validate(validData, request.query)
+        const cleanedData = request.query
 
-        await session.client.cd(path)
-        const files = await session.client.list(path)
-        response.status(200).send({files, path})
+        await session.client.cd(cleanedData.path)
+        const files = await session.client.list(cleanedData.path)
+
+        response.status(200).send({files, path: cleanedData.path})
     } catch (err) {
         response.status(403).send({"msg": "Unauthorised"})
     }
 }
 
 exports.postFile = async (request, response) => {
+    const validData = {
+        path: {
+            type: String,
+            required: false
+        }
+    }
+
     const {sessionid} = request.headers
     const {files} = request
 
     try {
         const session = getSession(sessionid)
-        const cwd = await session.client.pwd()
+
+        validData.path.default = await session.client.pwd()
+        validate(validData, request.body)
+
+        const cleanedData = clean(validData, request.body)
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i]
-            const path = `${cwd}/${file.originalname}`
+            const path = `${cleanedData.path}/${file.originalname}`
+            console.log(path)
             const readable = Readable.from(file.buffer)
             await session.client.uploadFrom(readable, path)
         }
 
-        response.status(200).send({msg: "all done"})
+        response.status(200).send({msg: `${files.length} files uploaded successfully to ${cleanedData.path}`})
     } catch (err) {
         console.error(err)
         response.status(403).send({"msg": err.message})
+    }
+}
+
+exports.postRemove = async (request, response) => {
+    const validData = {
+        path: {
+            type: String,
+            required: false,
+        },
+        filenames: {
+            type: Array,
+            required: true,
+            comparator(value) {
+                console.log(value)
+                return value.every((val) => {
+                    return typeof val === 'string' || val instanceof String
+                })
+            },
+        }
+    }
+
+    const {sessionid} = request.headers
+
+    try {
+        const session = getSession(sessionid)
+
+        validData.path.default = await session.client.pwd()
+
+        validate(validData, request.body)
+        const cleanedData = clean(validData, request.body)
+
+        console.log(cleanedData.filenames)
+
+        for (let i = 0; i < cleanedData.filenames.length; i++) {
+            const path = `${cleanedData.path}/${cleanedData.filenames[i]}`
+            await session.client.remove(path, true)
+        }
+
+        response.status(200).send({msg: `${cleanedData.filenames.length} files removed successfully from ${cleanedData.path}`})
+    } catch (err) {
+        console.error(err)
+        response.status(400).send({msg: err.message})
     }
 }

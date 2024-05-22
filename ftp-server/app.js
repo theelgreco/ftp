@@ -6,7 +6,7 @@ const cors = require("cors")
 const multer = require("multer")
 
 // local imports
-const {postConnect, getFiles, postFile} = require("./controllers.js")
+const {postConnect, getFiles, postFile, postRemove} = require("./controllers")
 
 // setup
 const app = express()
@@ -19,8 +19,12 @@ app.use(express.json())
 
 // endpoints
 app.post("/api/connect", postConnect)
+
 app.get("/api/files", getFiles)
+
 app.post("/api/upload", upload.array("files", 1000), postFile)
+
+app.post("/api/remove", postRemove)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)
