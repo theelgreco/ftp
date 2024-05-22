@@ -3,7 +3,7 @@ const {isBooleanable, boolean} = require("boolean")
 const validate = (validData, requestData) => {
     for (const key in validData) {
         if (requestData.hasOwnProperty(key)) {
-            const {type} = validData[key]
+            const {type, comparator} = validData[key]
             const value = requestData[key]
 
             switch (type) {
@@ -29,6 +29,13 @@ const validate = (validData, requestData) => {
                     break;
                 default:
                     break;
+            }
+
+            if(comparator){
+                const isValid = comparator.call(value)
+                if(!isValid){
+                    throw new Error(`${key} did not pass the validation.`)
+                }
             }
         } else if (validData[key].required) {
             throw new Error(`${key} is required but was not provided.`)
