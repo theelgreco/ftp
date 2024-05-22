@@ -146,3 +146,11 @@ exports.deleteFiles = async (request, response) => {
         response.status(400).send({msg: err.message})
     }
 }
+
+exports.deleteDirectory = async (request, response) => {
+    const validData = {
+        path: {
+            type: String
+        }
+    }
+}
