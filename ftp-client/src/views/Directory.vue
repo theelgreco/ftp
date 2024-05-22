@@ -1,9 +1,9 @@
 <template>
   <section class="section w-full h-full flex flex-col justify-center select-none" @click="selectSingleFile">
-    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] px-14 pt-6 mx-auto border-1 border-gray-200 shadow-2xl
+    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] px-14 pt-6 pb-8 mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col gap-6">
       <div class="sticky top-0 bg-[#f1f1f1] w-full">
-        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full">
+        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
           <template #item="{ item }">
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
               <i class="mdi mdi-home"/>
@@ -13,7 +13,7 @@
             </div>
           </template>
         </Breadcrumb>
-        <div class="bg-[#f1f1f1] breadcrumb w-full px-4 py-3 flex flex-wrap gap-3">
+        <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
                       custom-upload @uploader="uploadFiles" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
           <Button label="Create folder" icon="mdi mdi-plus"
