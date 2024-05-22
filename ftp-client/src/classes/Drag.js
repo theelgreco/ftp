@@ -30,7 +30,7 @@ export default class SelectionRect {
             this.el.style.width = `${this.sq_width}px`;
             this.el.style.height = `${this.sq_height}px`;
 
-            this.toggleAll(e)
+            // this.toggleAll(e)
 
             document.addEventListener("mousemove", this.handleMouseMoveBound);
             document.addEventListener("mouseup", this.handleMouseUpBound);
@@ -38,49 +38,53 @@ export default class SelectionRect {
     }
 
     handleMouseMove(e) {
-        const isSelecting = e.clientX > this.top_left_x + 0 || e.clientX < this.top_left_x - 0 || e.clientY > this.top_left_y + 0 || e.clientY < this.top_left_y - 0
+        const isSelecting = e.clientX > this.top_left_x + 5 || e.clientX < this.top_left_x - 5 || e.clientY > this.top_left_y + 5 || e.clientY < this.top_left_y - 5
 
-        if (this.selecting && !document.body.contains(this.el) && isSelecting) document.body.appendChild(this.el);
+        if (isSelecting) {
+            if (this.selecting && !document.body.contains(this.el)) {
+                document.body.appendChild(this.el);
+            }
 
-        this.bottom_right_x = e.clientX;
-        this.bottom_right_y = e.clientY;
-        let wid;
-        let height;
+            this.bottom_right_x = e.clientX;
+            this.bottom_right_y = e.clientY;
+            let wid;
+            let height;
 
-        if (this.bottom_right_x > this.top_left_x) {
-            this.el.style.left = `${this.top_left_x}px`;
-            wid = this.bottom_right_x - this.top_left_x;
+            if (this.bottom_right_x > this.top_left_x) {
+                this.el.style.left = `${this.top_left_x}px`;
+                wid = this.bottom_right_x - this.top_left_x;
+            }
+
+            if (this.bottom_right_y > this.top_left_y) {
+                this.el.style.top = `${this.top_left_y}px`;
+                height = this.bottom_right_y - this.top_left_y;
+            }
+
+            if (this.bottom_right_x < this.top_left_x) {
+                this.el.style.left = `${this.bottom_right_x}px`;
+                wid = this.top_left_x - this.bottom_right_x;
+            }
+
+            if (this.bottom_right_y < this.top_left_y) {
+                this.el.style.top = `${this.bottom_right_y}px`;
+                height = this.top_left_y - this.bottom_right_y;
+            }
+
+            if (this.bottom_right_x === this.top_left_x) {
+                this.el.style.left = `${this.top_left_x}px`;
+                wid = 0;
+            }
+
+            if (this.bottom_right_y === this.top_left_y) {
+                this.el.style.top = `${this.top_left_y}px`;
+                height = 0;
+            }
+
+            this.el.style.width = `${wid}px`;
+            this.el.style.height = `${height}px`;
+
+            this.toggleAll(e)
         }
-
-        if (this.bottom_right_y > this.top_left_y) {
-            this.el.style.top = `${this.top_left_y}px`;
-            height = this.bottom_right_y - this.top_left_y;
-        }
-
-        if (this.bottom_right_x < this.top_left_x) {
-            this.el.style.left = `${this.bottom_right_x}px`;
-            wid = this.top_left_x - this.bottom_right_x;
-        }
-
-        if (this.bottom_right_y < this.top_left_y) {
-            this.el.style.top = `${this.bottom_right_y}px`;
-            height = this.top_left_y - this.bottom_right_y;
-        }
-
-        if (this.bottom_right_x === this.top_left_x) {
-            this.el.style.left = `${this.top_left_x}px`;
-            wid = 0;
-        }
-
-        if (this.bottom_right_y === this.top_left_y) {
-            this.el.style.top = `${this.top_left_y}px`;
-            height = 0;
-        }
-
-        this.el.style.width = `${wid}px`;
-        this.el.style.height = `${height}px`;
-
-        this.toggleAll(e)
     }
 
     handleMouseUp(e) {

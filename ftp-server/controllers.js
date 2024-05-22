@@ -132,11 +132,12 @@ exports.postRemove = async (request, response) => {
         validate(validData, request.body)
         const cleanedData = clean(validData, request.body)
 
-        console.log(cleanedData.filenames)
-
         for (let i = 0; i < cleanedData.filenames.length; i++) {
-            const path = `${cleanedData.path}/${cleanedData.filenames[i]}`
-            await session.client.remove(path, true)
+            const path = cleanedData.path === '/'
+                ? `${cleanedData.path}${cleanedData.filenames[i]}`
+                : `${cleanedData.path}/${cleanedData.filenames[i]}`
+
+            await session.client.remove(path)
         }
 
         response.status(200).send({msg: `${cleanedData.filenames.length} files removed successfully from ${cleanedData.path}`})
