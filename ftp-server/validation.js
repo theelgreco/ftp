@@ -2,8 +2,8 @@ const e = require("express");
 const {isBooleanable, boolean} = require("boolean")
 const validate = (validData, requestData) => {
     for (const key in validData) {
-        if (requestData.hasOwnProperty(key)) {
-            const {type} = validData[key]
+        if (Object.getPrototypeOf(requestData) && requestData.hasOwnProperty(key)) {
+            const {type, comparator} = validData[key]
             const value = requestData[key]
 
             switch (type) {
@@ -18,7 +18,7 @@ const validate = (validData, requestData) => {
                     }
                     break;
                 case Array:
-                    if (!Array.isArray(JSON.parse(value))) {
+                    if (!Array.isArray(JSON.parse(JSON.stringify(value)))) {
                         throw new Error(`${key} must be a valid array.`)
                     }
                     break;
@@ -30,6 +30,13 @@ const validate = (validData, requestData) => {
                 default:
                     break;
             }
+
+            if (comparator) {
+                const isValid = comparator.call(this, value)
+                if (!isValid) {
+                    throw new Error(`${key} did not pass the validation.`)
+                }
+            }
         } else if (validData[key].required) {
             throw new Error(`${key} is required but was not provided.`)
         }
@@ -40,13 +47,13 @@ const clean = (validData, requestData) => {
     const response = {}
 
     for (const key in validData) {
-        if (!requestData.hasOwnProperty(key)) {
+        if (!Object.getPrototypeOf(requestData) || !requestData.hasOwnProperty(key)) {
             response[key] = validData[key].default
         } else {
             const {type} = validData[key]
             let value = requestData[key]
 
-            if (type !== String) value = JSON.parse(value)
+            if (type !== String) value = JSON.parse(JSON.stringify(value))
 
             switch (type) {
                 case Number:
