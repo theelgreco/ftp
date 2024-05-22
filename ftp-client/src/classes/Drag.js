@@ -9,15 +9,14 @@ export default class SelectionRect {
         this.sq_height = 0;
         this.el = document.createElement("div");
         this.handleMouseMoveBound = this.handleMouseMove.bind(this);
+        this.handleMouseUpBound = this.handleMouseUp.bind(this);
 
         document.addEventListener("mousedown", this.init.bind(this));
-
-        document.addEventListener("mouseup", this.handleMouseUp.bind(this));
     }
 
     init(e) {
-        if (e) {
-            this.selecting = true;
+        if (e && e.button === 0) {
+            this.selecting = true
 
             this.top_left_x = e.clientX;
             this.top_left_y = e.clientY;
@@ -31,12 +30,12 @@ export default class SelectionRect {
             this.el.style.width = `${this.sq_width}px`;
             this.el.style.height = `${this.sq_height}px`;
 
-            const body = document.querySelector("body");
-            body.appendChild(this.el);
+            document.body.appendChild(this.el);
 
             this.toggleAll(e)
 
             document.addEventListener("mousemove", this.handleMouseMoveBound);
+            document.addEventListener("mouseup", this.handleMouseUpBound);
         }
     }
 
@@ -116,8 +115,9 @@ export default class SelectionRect {
     handleMouseUp(e) {
         this.selecting = false;
 
-        const body = document.querySelector("body");
-        body.removeChild(this.el);
+        if (document.body.contains(this.el)) {
+            document.body.removeChild(this.el);
+        }
 
         document.removeEventListener("mousemove", this.handleMouseMoveBound);
     }
