@@ -15,7 +15,7 @@
         </Breadcrumb>
         <div class="bg-[#f1f1f1] breadcrumb w-full px-4 py-3 flex gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload @uploader="upload" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
+                      custom-upload @uploader="uploadFiles" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
           <Button label="Create folder" icon="mdi mdi-plus"
                   class="border-1 border-blue-500 text-blue-500 pl-2 pr-3 text-[13px] hover:bg-blue-100"/>
         </div>
@@ -202,13 +202,17 @@ export default {
     },
     async deleteFiles(e) {
       try {
-        const {data} = await this.$http.post("api/remove", {filenames: this.selectedFilenames})
+        const {data} = await this.$http.delete("api/files", {
+          data: {
+            filenames: this.selectedFilenames
+          }
+        })
         console.log(data)
       } catch (err) {
         console.error(err)
       }
     },
-    async upload(e) {
+    async uploadFiles(e) {
       const {files} = e
 
       const form = new FormData()
@@ -217,7 +221,7 @@ export default {
         form.append('files', file)
       })
 
-      const {data} = await this.$http.post('api/upload', form, {
+      const {data} = await this.$http.post('api/files', form, {
         headers: {'Content-Type': 'multipart/form-data'}
       })
 

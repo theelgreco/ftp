@@ -70,7 +70,7 @@ exports.getFiles = async (request, response) => {
     }
 }
 
-exports.postFile = async (request, response) => {
+exports.postFiles = async (request, response) => {
     const validData = {
         path: {
             type: String,
@@ -104,7 +104,7 @@ exports.postFile = async (request, response) => {
     }
 }
 
-exports.postRemove = async (request, response) => {
+exports.deleteFiles = async (request, response) => {
     const validData = {
         path: {
             type: String,
