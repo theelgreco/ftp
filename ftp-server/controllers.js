@@ -1,5 +1,6 @@
 const {clean, validate} = require("./validation.js")
 const {createSession, getSession} = require("./sessions.js")
+const {Readable} = require("stream")
 
 exports.postConnect = async (request, response) => {
     const validData = {
@@ -47,11 +48,37 @@ exports.getFiles = async (request, response) => {
 
     try {
         const session = getSession(sessionid)
-        const cwd = await session.client.pwd()
-        if(!path) path = cwd
+
+        if (!path) {
+            path = await session.client.pwd()
+        }
+
+        await session.client.cd(path)
         const files = await session.client.list(path)
-        response.status(200).send({files, cwd})
+        response.status(200).send({files, path})
     } catch (err) {
         response.status(403).send({"msg": "Unauthorised"})
+    }
+}
+
+exports.postFile = async (request, response) => {
+    const {sessionid} = request.headers
+    const {files} = request
+
+    try {
+        const session = getSession(sessionid)
+        const cwd = await session.client.pwd()
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i]
+            const path = `${cwd}/${file.originalname}`
+            const readable = Readable.from(file.buffer)
+            await session.client.uploadFrom(readable, path)
+        }
+
+        response.status(200).send({msg: "all done"})
+    } catch (err) {
+        console.error(err)
+        response.status(403).send({"msg": err.message})
     }
 }

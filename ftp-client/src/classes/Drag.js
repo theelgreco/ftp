@@ -30,8 +30,6 @@ export default class SelectionRect {
             this.el.style.width = `${this.sq_width}px`;
             this.el.style.height = `${this.sq_height}px`;
 
-            document.body.appendChild(this.el);
-
             this.toggleAll(e)
 
             document.addEventListener("mousemove", this.handleMouseMoveBound);
@@ -39,38 +37,11 @@ export default class SelectionRect {
         }
     }
 
-    checkOverlap(element) {
-        const elementRect = element.getBoundingClientRect();
-        const selectionRect = this.el.getBoundingClientRect();
-
-        return (
-            elementRect.left < selectionRect.right &&
-            elementRect.right > selectionRect.left &&
-            elementRect.top < selectionRect.bottom &&
-            elementRect.bottom > selectionRect.top
-        );
-    }
-
-    toggleSelectedClass(element, e) {
-        if (this.checkOverlap(element)) {
-            element.classList.add("selected");
-            element.dispatchEvent(new Event("selectionmouseover"));
-        } else {
-            if (!e.shiftKey) {
-                element.classList.remove("selected");
-                element.dispatchEvent(new Event("selectionmouseout"));
-            }
-        }
-    }
-
-    toggleAll(e) {
-        const items = document.querySelectorAll(".item");
-        items.forEach((item) => {
-            this.toggleSelectedClass(item, e);
-        });
-    }
-
     handleMouseMove(e) {
+        const isSelecting = e.clientX > this.top_left_x + 0 || e.clientX < this.top_left_x - 0 || e.clientY > this.top_left_y + 0 || e.clientY < this.top_left_y - 0
+
+        if (this.selecting && !document.body.contains(this.el) && isSelecting) document.body.appendChild(this.el);
+
         this.bottom_right_x = e.clientX;
         this.bottom_right_y = e.clientY;
         let wid;
@@ -120,5 +91,36 @@ export default class SelectionRect {
         }
 
         document.removeEventListener("mousemove", this.handleMouseMoveBound);
+    }
+
+    checkOverlap(element) {
+        const elementRect = element.getBoundingClientRect();
+        const selectionRect = this.el.getBoundingClientRect();
+
+        return (
+            elementRect.left < selectionRect.right &&
+            elementRect.right > selectionRect.left &&
+            elementRect.top < selectionRect.bottom &&
+            elementRect.bottom > selectionRect.top
+        );
+    }
+
+    toggleSelectedClass(element, e) {
+        if (this.checkOverlap(element)) {
+            // element.classList.add("selected");
+            element.dispatchEvent(new Event("selectionmouseover"));
+        } else {
+            if (!e.shiftKey) {
+                // element.classList.remove("selected");
+                element.dispatchEvent(new Event("selectionmouseout"));
+            }
+        }
+    }
+
+    toggleAll(e) {
+        const items = document.querySelectorAll(".item");
+        items.forEach((item) => {
+            this.toggleSelectedClass(item, e);
+        });
     }
 }

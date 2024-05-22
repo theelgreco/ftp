@@ -2,22 +2,34 @@
   <section class="section w-full h-full flex flex-col justify-center select-none">
     <div class="content md:w-[90%] w-[90%] md:p-16 max-h-[90%] min-h-[50%] p-14 mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col gap-6">
-      <Breadcrumb :home="home" :model="items" class="sticky top-0 bg-[#f1f1f1] breadcrumb pb-3 w-full">
-        <template #item="{ item }">
-          <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
-            <i class="mdi mdi-home"/>
-          </div>
-          <div v-else class="cursor-pointer" @mousedown="goTo(item.path)">
-            {{ item.label }}
-          </div>
-        </template>
-      </Breadcrumb>
+      <div class="sticky top-0 bg-[#f1f1f1] w-full">
+        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full">
+          <template #item="{ item }">
+            <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
+              <i class="mdi mdi-home"/>
+            </div>
+            <div v-else class="cursor-pointer" @mousedown="goTo(item.path)">
+              {{ item.label }}
+            </div>
+          </template>
+        </Breadcrumb>
+        <div class="bg-[#f1f1f1] breadcrumb w-full px-4 py-3 flex gap-3">
+          <FileUpload mode="basic" name="files" :maxFileSize="1000000"
+                      :multiple="true" choose-label="Upload" :auto="true" custom-upload @uploader="upload"/>
+          <Button label="Create folder" class="border-1 border-blue-500 text-blue-500 pl-2 pr-3" icon="mdi mdi-plus"/>
+        </div>
+      </div>
       <div class="flex flex-wrap gap-6 w-full h-full overflow-y-auto" v-if="files.length">
         <div v-for="file in files" :key="file.name"
              class="item flex flex-col items-center text-center w-[23%] max-w-[100px] p-3 max-h-[100px] rounded
                     hover:bg-blue-50 transition"
+             :class="{selected: selected.includes(file)}"
              :title="file.name"
-             @mousedown="handleFileClick(file)">
+             @contextmenu="onRightClick"
+             @dblclick="handleFileDoubleClick(file)"
+             @click="handleFileSelect(file)"
+             @selectionmouseover="handleFileSelect(file)"
+             @selectionmouseout="handleFileDeselect(file)">
           <template v-if="file.type === 2">
             <i class="mdi mdi-folder text-5xl text-blue-300"/>
             <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500">
@@ -30,22 +42,27 @@
           </template>
         </div>
       </div>
-      <div v-else>
-        No files in this directory
+      <div v-else class="mx-auto text-center select-none pointer-events-none">
+        <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-file-10681491-8593307.png"
+             style="width: 200px"/>
+        <p class="text-gray-400">No files in this directory</p>
       </div>
     </div>
+    <ContextMenu ref="menu" :model="[{label: 'hello'}]"/>
   </section>
 </template>
 
 <script>
+import Button from "primevue/button";
 import Breadcrumb from "primevue/breadcrumb";
+import FileUpload from "primevue/fileupload";
 import ContextMenu from "primevue/contextmenu";
 import router from "@/router/index.js";
 import SelectionRect from "@/classes/Drag.js";
 
 export default {
   name: "Directory",
-  components: {Breadcrumb, ContextMenu},
+  components: {Breadcrumb, FileUpload, ContextMenu, Button},
   data() {
     return {
       files: [],
@@ -55,8 +72,7 @@ export default {
       loading: null,
       error: null,
       success: null,
-      selected: null,
-      clicked: false
+      selected: [],
     }
   },
   computed: {
@@ -79,6 +95,19 @@ export default {
     },
   },
   methods: {
+    async upload(e) {
+      const {files} = e
+
+      const form = new FormData()
+
+      files.forEach((file) => {
+       form.append('files', file)
+      })
+
+      await this.$http.post('api/upload', form, {
+        headers: {'Content-Type': 'multipart/form-data'}
+      })
+    },
     getPathString(atIndex) {
       let URL = `/`
 
@@ -108,16 +137,24 @@ export default {
         this.success = isSuccessful
       }
     },
-    handleFileClick(file) {
-      if (!this.clicked) {
-        this.clicked = true
-        this.selected = file.name
-        setTimeout(() => {
-          this.clicked = false
-        }, 500)
-      } else if (file.type === 2 && this.selected === file.name) {
+    handleFileSelect(file) {
+      if (!this.selected.includes(file)) {
+        this.selected.push(file)
+      }
+    },
+    handleFileDeselect(file) {
+      if (this.selected.includes(file)) {
+        const index = this.selected.findIndex((el) => el.name === file.name)
+        this.selected = this.selected.toSpliced(index, 1)
+      }
+    },
+    handleFileDoubleClick(file) {
+      if (file.type === 2) {
         this.goForward(file.name)
       }
+    },
+    onRightClick(e) {
+      this.$refs.menu.show(e)
     },
     async goTo(path) {
       await router.push(`/files${path}`)
@@ -126,9 +163,6 @@ export default {
       const newRoute = this.getPathString()
       await router.push(`/files${newRoute}${directory}`)
     },
-    onRightClick(e){
-      this.$refs.menu.show(event);
-    }
   },
   async created() {
     await this.getFiles()

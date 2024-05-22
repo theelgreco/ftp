@@ -1,3 +1,4 @@
+import 'primevue/resources/themes/aura-light-blue/theme.css'
 import "./index.css"
 import {createApp} from 'vue'
 
@@ -14,4 +15,4 @@ const baseAxios = axios.create({
 
 const app = createApp(App)
 app.config.globalProperties.$http = baseAxios
-app.use(router, PrimeVue).mount('#app')
+app.use(router).use(PrimeVue).mount('#app')
