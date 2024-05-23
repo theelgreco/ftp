@@ -15,20 +15,22 @@
         </Breadcrumb>
         <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"
+                      custom-upload class="pl-2 pr-3 text-[13px] w-full" upload-icon="mdi mdi-upload"
                       @uploader="uploadFiles"/>
           <Button label="Create folder"
-                  class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
+                  class="border-1 border-blue-500 text-blue-500 flex-grow sm:flex-grow-0 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
                   icon="mdi mdi-plus"
                   @click="showCreateFolder"/>
         </div>
       </div>
-      <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
+      <div v-if="files.length" class="flex sm:flex-wrap sm:flex-row flex-nowrap flex-col gap-3 sm:gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
            ref="directory"
            @mousedown="selectSingleFile"
            @contextmenu="onRightClick">
         <div v-for="file in files" :key="file.name"
-             class="item flex flex-col items-center text-center w-[23%] max-w-[100px] p-3 max-h-[100px] rounded
+             class="item flex flex-row sm:flex-col items-center text-center rounded gap-3 sm:gap-0
+                    w-full sm:aspect-square
+                    sm:w-[23%] sm:max-w-[100px] p-3
                     hover:bg-blue-50 transition"
              :class="{selected: selected.includes(file)}"
              :title="file.name"
@@ -38,14 +40,14 @@
              @selectionmouseover="e => selectMultipleFiles(e, file, true)"
              @selectionmouseout="e => handleFileDeselect(e, file)">
           <template v-if="file.type === 2">
-            <i class="mdi mdi-folder text-5xl text-blue-300"/>
-            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 text-[12px]">
+            <i class="mdi mdi-folder text-3xl sm:text-5xl text-blue-300"/>
+            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 sm:text-[12px] whitespace-nowrap">
               {{ file.name }}
             </p>
           </template>
           <template v-else-if="file.type === 1">
-            <i class="mdi mdi-file text-5xl text-gray-300"/>
-            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500 text-[12px]">
+            <i class="mdi mdi-file text-3xl sm:text-5xl text-gray-300"/>
+            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500 sm:text-[12px] whitespace-nowrap">
               {{ file.name }}
             </p>
           </template>
@@ -383,6 +385,11 @@ export default {
 }
 
 .selected {
-  @apply bg-blue-100
+  @apply bg-blue-100;
+}
+
+.p-fileupload {
+  @apply flex-grow;
+  @apply sm:flex-grow-0;
 }
 </style>
