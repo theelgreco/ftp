@@ -1,9 +1,9 @@
 <template>
   <section class="section w-full h-full flex flex-col justify-center select-none" @click="selectSingleFile">
-    <div class="content md:w-[90%] w-[90%] md:p-16 max-h-[90%] min-h-[50%] p-14 mx-auto border-1 border-gray-200 shadow-2xl
+    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] px-14 pt-6 pb-8 mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col gap-6">
       <div class="sticky top-0 bg-[#f1f1f1] w-full">
-        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full">
+        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
           <template #item="{ item }">
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
               <i class="mdi mdi-home"/>
@@ -13,11 +13,11 @@
             </div>
           </template>
         </Breadcrumb>
-        <div class="bg-[#f1f1f1] breadcrumb w-full px-4 py-3 flex gap-3">
+        <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload @uploader="upload" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
+                      custom-upload @uploader="uploadFiles" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
           <Button label="Create folder" icon="mdi mdi-plus"
-                  class="border-1 border-blue-500 text-blue-500 pl-2 pr-3 text-[13px] hover:bg-blue-100"/>
+                  class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"/>
         </div>
       </div>
       <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto" @contextmenu="onRightClick">
@@ -27,6 +27,7 @@
              :class="{selected: selected.includes(file)}"
              :title="file.name"
              @contextmenu="e => onRightClick(e, file)"
+             @doubletap="handleFileDoubleClick(file)"
              @dblclick="handleFileDoubleClick(file)"
              @click="e => selectSingleFile(e, file)"
              @selectionmouseover="e => selectMultipleFiles(e, file, true)"
@@ -202,13 +203,17 @@ export default {
     },
     async deleteFiles(e) {
       try {
-        const {data} = await this.$http.post("api/remove", {filenames: this.selectedFilenames})
+        const {data} = await this.$http.delete("api/files", {
+          data: {
+            filenames: this.selectedFilenames
+          }
+        })
         console.log(data)
       } catch (err) {
         console.error(err)
       }
     },
-    async upload(e) {
+    async uploadFiles(e) {
       const {files} = e
 
       const form = new FormData()
@@ -217,7 +222,7 @@ export default {
         form.append('files', file)
       })
 
-      const {data} = await this.$http.post('api/upload', form, {
+      const {data} = await this.$http.post('api/files', form, {
         headers: {'Content-Type': 'multipart/form-data'}
       })
 
