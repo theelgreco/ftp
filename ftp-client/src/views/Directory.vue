@@ -2,7 +2,7 @@
   <section class="section w-full h-full flex flex-col justify-center select-none">
     <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col">
-      <div class="sticky top-0 bg-[#f1f1f1] w-full px-14 pt-6">
+      <div class="sticky top-0 bg-[#f1f1f1] w-full px-6 sm:px-14 pt-6">
         <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
           <template #item="{ item }">
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
@@ -15,21 +15,23 @@
         </Breadcrumb>
         <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"
+                      custom-upload class="pl-2 pr-3 text-[13px] w-full" upload-icon="mdi mdi-upload"
                       @uploader="uploadFiles"/>
           <Button label="Create folder"
-                  class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
+                  class="border-1 border-blue-500 text-blue-500 flex-grow sm:flex-grow-0 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
                   icon="mdi mdi-plus"
                   @click="showCreateFolder"/>
         </div>
       </div>
-      <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
+      <div v-if="files.length"
+           class="flex sm:flex-wrap sm:flex-row flex-nowrap flex-col gap-3 sm:gap-6 w-full h-full overflow-y-auto
+                  px-4 sm:px-14 pt-6 pb-8"
            ref="directory"
            @mousedown="selectSingleFile"
            @contextmenu="onRightClick">
         <div v-for="file in files" :key="file.name"
-             class="item flex flex-col items-center text-center w-[23%] max-w-[100px] p-3 max-h-[100px] rounded
-                    hover:bg-blue-50 transition"
+             class="item flex flex-row sm:flex-col items-center text-center rounded gap-3 sm:gap-0 h-fit w-full
+                    sm:aspect-square sm:w-[23%] sm:max-w-[100px] p-3 hover:bg-blue-50 transition"
              :class="{selected: selected.includes(file)}"
              :title="file.name"
              @contextmenu="e => onRightClick(e, file)"
@@ -38,18 +40,20 @@
              @selectionmouseover="e => selectMultipleFiles(e, file, true)"
              @selectionmouseout="e => handleFileDeselect(e, file)">
           <template v-if="file.type === 2">
-            <i class="mdi mdi-folder text-5xl text-blue-300"/>
-            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500">
+            <i class="mdi mdi-folder text-3xl sm:text-5xl text-blue-300"/>
+            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 sm:text-[12px] whitespace-nowrap">
               {{ file.name }}
             </p>
           </template>
           <template v-else-if="file.type === 1">
-            <i class="mdi mdi-file text-5xl text-gray-300"/>
-            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500">{{ file.name }}</p>
+            <i class="mdi mdi-file text-3xl sm:text-5xl text-gray-300"/>
+            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500 sm:text-[12px] whitespace-nowrap">
+              {{ file.name }}
+            </p>
           </template>
         </div>
       </div>
-      <div v-else class="mx-auto text-center select-none pointer-events-none px-14 pt-8 pb-8"
+      <div v-else class="mx-auto text-center select-none pointer-events-none px-6 sm:px-14 pt-8 pb-8"
            @contextmenu="onRightClick">
         <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-file-10681491-8593307.png"
              style="width: 200px"/>
@@ -130,6 +134,7 @@ export default {
     },
     fileContextItems() {
       const items = [
+        {label: `Download (${this.selected.length} selected)`, icon: 'mdi mdi-download', action: this.downloadFiles},
         {label: 'Select all', icon: 'mdi mdi-select-all', action: this.selectAll},
       ]
 
@@ -158,7 +163,7 @@ export default {
       if (e) {
         e.stopPropagation()
         if (e.button === 2) return
-        if(e.button === 0 && this.$refs.menu.visible) this.$refs.menu.hide()
+        if (e.button === 0 && this.$refs.menu.visible) this.$refs.menu.hide()
       }
 
       if (!file && (e && !e.shiftKey)) {
@@ -237,6 +242,7 @@ export default {
         this.loading = true
 
         const {data} = await this.$http.get("/api/files", {params: {path}})
+        console.log(data)
 
         this.cwd = data.path
         this.files = data.files
@@ -292,6 +298,35 @@ export default {
       })
 
       console.log(data)
+    },
+    async downloadFiles(e) {
+      try {
+        const blobs = []
+
+        for (let i = 0; i < this.selectedFilenames.length; i++) {
+          const response = await this.$http.get("api/files/download", {
+            params: {filename: this.selectedFilenames[i]},
+            responseType: 'blob'
+          })
+
+          const aElement = document.createElement('a');
+          const href = URL.createObjectURL(response.data);
+          aElement.href = href;
+
+          const filename = response.config.params.filename;
+
+          aElement.setAttribute('download', filename);
+
+          blobs.push({href, aElement})
+        }
+
+        blobs.forEach((blob) => {
+          blob.aElement.click();
+          URL.revokeObjectURL(blob.href);
+        })
+      } catch (err) {
+        console.error(err)
+      }
     },
     async goTo(path) {
       await router.push(`/files${path}`)
@@ -358,6 +393,11 @@ export default {
 }
 
 .selected {
-  @apply bg-blue-100
+  @apply bg-blue-100;
+}
+
+.p-fileupload {
+  @apply flex-grow;
+  @apply sm:flex-grow-0;
 }
 </style>
