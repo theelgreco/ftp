@@ -26,8 +26,8 @@ export default {
     async createFolder() {
       if (this.value) {
         try {
-          await this.$http.post("api/directory", {path: this.value})
-          this.$emit("created")
+          const {data} = await this.$http.post("api/directories", {path: this.value})
+          this.$emit("created", data)
         } catch (err) {
           console.error(err)
         }
