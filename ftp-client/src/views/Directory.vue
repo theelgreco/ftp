@@ -86,7 +86,7 @@ export default {
   components: {Breadcrumb, FileUpload, ContextMenu, Button},
   data() {
     return {
-      files: [],
+      _files: [],
       home: {
         icon: 'mdi mdi-home'
       },
@@ -101,6 +101,14 @@ export default {
     }
   },
   computed: {
+    files() {
+      if (this._files.length) {
+        return this._files.toSorted((a, b) => {
+          return a.name.localeCompare(b.name)
+        })
+      }
+      return []
+    },
     path() {
       let paths = ["/"]
       const pathURL = this.$route.params.path
@@ -245,7 +253,7 @@ export default {
         console.log(data)
 
         this.cwd = data.path
-        this.files = data.files
+        this._files = data.files
 
         isSuccessful = true
       } catch (err) {

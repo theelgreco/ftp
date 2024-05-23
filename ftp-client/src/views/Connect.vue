@@ -67,7 +67,7 @@ export default {
         port: 21,
         user: "",
         password: "",
-        secure: true
+        secure: false
       },
       loading: null,
       error: null,
