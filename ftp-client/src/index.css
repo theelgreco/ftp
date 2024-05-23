@@ -15,6 +15,7 @@ body {
     width: 100vw;
     height: 100svh;
     overflow: hidden;
+    margin: 0;
 }
 
 .p-menuitem-icon {
