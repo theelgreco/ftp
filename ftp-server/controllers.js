@@ -163,14 +163,9 @@ exports.getDownloadFiles = async (request, response) => {
             type: String,
             required: false
         },
-        filenames: {
-            type: Array,
+        filename: {
+            type: String,
             required: true,
-            comparator(value) {
-                return value.every((val) => {
-                    return typeof val === 'string' || val instanceof String
-                })
-            },
         }
     }
 
@@ -182,11 +177,12 @@ exports.getDownloadFiles = async (request, response) => {
 
         const cleanedData = validateAndClean(validData, request.query)
 
-        response.setHeader('Content-Disposition', `attachment; filename="${cleanedData.filenames[0]}"`);
+        response.setHeader('Content-Disposition', `attachment; filename="${cleanedData.filename}"`);
         response.setHeader('Content-Type', 'application/octet-stream');
+
         const writable = new ResponseWritable(response)
 
-        const path = formatPath(cleanedData, 'filenames', 0)
+        const path = formatPath(cleanedData, 'filename')
 
         await session.client.downloadTo(writable, path)
     } catch (error) {

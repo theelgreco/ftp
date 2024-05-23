@@ -2,7 +2,7 @@
   <section class="section w-full h-full flex flex-col justify-center select-none">
     <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col">
-      <div class="sticky top-0 bg-[#f1f1f1] w-full px-14 pt-6">
+      <div class="sticky top-0 bg-[#f1f1f1] w-full px-6 sm:px-14 pt-6">
         <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
           <template #item="{ item }">
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
@@ -23,15 +23,15 @@
                   @click="showCreateFolder"/>
         </div>
       </div>
-      <div v-if="files.length" class="flex sm:flex-wrap sm:flex-row flex-nowrap flex-col gap-3 sm:gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
+      <div v-if="files.length"
+           class="flex sm:flex-wrap sm:flex-row flex-nowrap flex-col gap-3 sm:gap-6 w-full h-full overflow-y-auto
+                  px-4 sm:px-14 pt-6 pb-8"
            ref="directory"
            @mousedown="selectSingleFile"
            @contextmenu="onRightClick">
         <div v-for="file in files" :key="file.name"
-             class="item flex flex-row sm:flex-col items-center text-center rounded gap-3 sm:gap-0
-                    w-full sm:aspect-square
-                    sm:w-[23%] sm:max-w-[100px] p-3
-                    hover:bg-blue-50 transition"
+             class="item flex flex-row sm:flex-col items-center text-center rounded gap-3 sm:gap-0 h-fit w-full
+                    sm:aspect-square sm:w-[23%] sm:max-w-[100px] p-3 hover:bg-blue-50 transition"
              :class="{selected: selected.includes(file)}"
              :title="file.name"
              @contextmenu="e => onRightClick(e, file)"
@@ -53,7 +53,7 @@
           </template>
         </div>
       </div>
-      <div v-else class="mx-auto text-center select-none pointer-events-none px-14 pt-8 pb-8"
+      <div v-else class="mx-auto text-center select-none pointer-events-none px-6 sm:px-14 pt-8 pb-8"
            @contextmenu="onRightClick">
         <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-file-10681491-8593307.png"
              style="width: 200px"/>
@@ -301,21 +301,29 @@ export default {
     },
     async downloadFiles(e) {
       try {
-        const response = await this.$http.get("api/files/download", {
-          params: {filenames: this.selectedFilenames},
-          responseType: 'blob'
+        const blobs = []
+
+        for (let i = 0; i < this.selectedFilenames.length; i++) {
+          const response = await this.$http.get("api/files/download", {
+            params: {filename: this.selectedFilenames[i]},
+            responseType: 'blob'
+          })
+
+          const aElement = document.createElement('a');
+          const href = URL.createObjectURL(response.data);
+          aElement.href = href;
+
+          const filename = response.config.params.filename;
+
+          aElement.setAttribute('download', filename);
+
+          blobs.push({href, aElement})
+        }
+
+        blobs.forEach((blob) => {
+          blob.aElement.click();
+          URL.revokeObjectURL(blob.href);
         })
-        console.log(response)
-
-        const aElement = document.createElement('a');
-        const href = URL.createObjectURL(response.data);
-        aElement.href = href;
-
-        const filename = response.config.params.filenames[0];
-
-        aElement.setAttribute('download', filename);
-        aElement.click();
-        URL.revokeObjectURL(href);
       } catch (err) {
         console.error(err)
       }
