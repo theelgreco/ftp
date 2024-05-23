@@ -71,4 +71,13 @@ const clean = (validData, requestData) => {
     return response
 }
 
-module.exports = {clean, validate}
+const validateAndClean = (validData, requestData) => {
+    try {
+        validate(validData, requestData)
+        return clean(validData, requestData)
+    } catch (err) {
+        throw err
+    }
+}
+
+module.exports = {clean, validate, validateAndClean}
