@@ -164,9 +164,52 @@ exports.postCreateDirectory = async (request, response) => {
         await session.client.ensureDir(cleanedData.path)
         await session.client.cd(validData.path.default)
 
-        response.status(200).send({msg: `Directory ${validData.path} created successfully.`})
+        response.status(200).send({msg: `Directory ${cleanedData.path} created successfully.`})
     } catch (error) {
         console.error(error)
         response.status(400).send(error.message)
+    }
+}
+
+exports.deleteDirectories = async (request, response) => {
+    const validData = {
+        path: {
+            type: String,
+            required: false,
+        },
+        dirnames: {
+            type: Array,
+            required: true,
+            comparator(value) {
+                return value.every((val) => {
+                    return typeof val === 'string' || val instanceof String
+                })
+            },
+        }
+    }
+
+    const {sessionid} = request.headers
+
+    try {
+        const session = getSession(sessionid)
+
+        validData.path.default = await session.client.pwd()
+
+        const cleanedData = validateAndClean(validData, request.body)
+
+        for (let i = 0; i < cleanedData.dirnames.length; i++) {
+            const path = cleanedData.path === '/'
+                ? `${cleanedData.path}${cleanedData.dirnames[i]}`
+                : `${cleanedData.path}/${cleanedData.dirnames[i]}`
+
+            await session.client.removeDir(path)
+        }
+
+        response.status(200).send({
+            msg: `${cleanedData.dirnames.length} directories removed successfully from ${cleanedData.path}`
+        })
+    } catch (error) {
+        console.error(error)
+        response.status(400).send({msg: error.message})
     }
 }
