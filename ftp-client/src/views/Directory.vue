@@ -8,16 +8,19 @@
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
               <i class="mdi mdi-home"/>
             </div>
-            <div v-else class="cursor-pointer" @mousedown="goTo(item.path)">
+            <div v-else class="cursor-pointer text-gray-400" @mousedown="goTo(item.path)">
               {{ item.label }}
             </div>
           </template>
         </Breadcrumb>
         <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload @uploader="uploadFiles" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
-          <Button label="Create folder" icon="mdi mdi-plus" @click="showCreateFolder"
-                  class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"/>
+                      custom-upload class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"
+                      @uploader="uploadFiles"/>
+          <Button label="Create folder"
+                  class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
+                  icon="mdi mdi-plus"
+                  @click="showCreateFolder"/>
         </div>
       </div>
       <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
@@ -30,7 +33,6 @@
              :class="{selected: selected.includes(file)}"
              :title="file.name"
              @contextmenu="e => onRightClick(e, file)"
-             @doubletap="handleFileDoubleClick(file)"
              @dblclick="handleFileDoubleClick(file)"
              @mousedown="e => selectSingleFile(e, file)"
              @selectionmouseover="e => selectMultipleFiles(e, file, true)"
@@ -54,7 +56,7 @@
         <p class="text-gray-400">This folder is empty</p>
       </div>
     </div>
-    <ContextMenu ref="menu" :model="fileContextItems">
+    <ContextMenu ref="menu" :model="fileContextItems" class="select-none">
       <template #item="{ item, props }">
         <div class="p-2 flex gap-2 cursor-pointer" @click="item.action">
           <i :class="item.icon"/>
@@ -132,7 +134,11 @@ export default {
       ]
 
       if (this.selected.length) {
-        items.unshift({label: 'Delete', icon: 'mdi mdi-delete', action: this.deleteFiles},)
+        items.unshift({
+          label: `Delete (${this.selected.length} selected)`,
+          icon: 'mdi mdi-delete',
+          action: this.deleteFiles
+        })
       }
 
       return items
@@ -149,10 +155,15 @@ export default {
       return URL
     },
     selectSingleFile(e, file) {
-      e.stopPropagation()
+      if (e) {
+        e.stopPropagation()
+        if (e.button === 2) return
+        if(e.button === 0 && this.$refs.menu.visible) this.$refs.menu.hide()
+      }
 
       if (!file && (e && !e.shiftKey)) {
         this.deselectAll()
+        this.$refs.menu.hide()
       } else if (e && e.shiftKey) {
         this.selectMultipleFiles(e, file)
       } else {
@@ -184,9 +195,9 @@ export default {
     onRightClick(e, file) {
       e.stopPropagation()
 
-      if (this.selected.length <= 1 && file) {
+      if (file && !this.selected.includes(file)) {
         this.deselectAll()
-        this.selectSingleFile(e, file)
+        this.selectSingleFile(null, file)
       }
 
       this.$refs.menu.show(e)
@@ -209,7 +220,8 @@ export default {
           draggable: false,
         },
         emits: {
-          onCreated: () => {
+          onCreated: (data) => {
+            console.log(data)
             dialogRef.close()
           },
         }
@@ -245,15 +257,23 @@ export default {
       }
     },
     async deleteFiles(e) {
-      console.log(this.selectedFilenames)
-      console.log(this.selectedFolderNames)
       try {
-        const {data} = await this.$http.delete("api/files", {
-          data: {
-            filenames: this.selectedFilenames
-          }
-        })
-        console.log(data)
+        if (this.selectedFilenames.length) {
+          const {data} = await this.$http.delete("api/files", {
+            data: {
+              filenames: this.selectedFilenames
+            }
+          })
+          console.log(data)
+        }
+        if (this.selectedFolderNames.length) {
+          const {data} = await this.$http.delete("api/directories", {
+            data: {
+              dirnames: this.selectedFolderNames
+            }
+          })
+          console.log(data)
+        }
       } catch (err) {
         console.error(err)
       }
