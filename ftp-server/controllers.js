@@ -1,6 +1,22 @@
 const {validateAndClean} = require("./validation.js")
 const {createSession, getSession} = require("./sessions.js")
-const {Readable} = require("stream")
+const {Readable, Writable} = require("stream")
+const {formatPath} = require("./helpers");
+
+class ResponseWritable extends Writable {
+    constructor(response) {
+        super();
+        this.response = response;
+    }
+
+    _write(chunk, encoding, callback) {
+        this.response.write(chunk, encoding, callback);
+    }
+
+    _final(callback) {
+        this.response.end(callback);
+    }
+}
 
 exports.postConnect = async (request, response) => {
     const validData = {
@@ -130,10 +146,7 @@ exports.deleteFiles = async (request, response) => {
         const cleanedData = validateAndClean(validData, request.body)
 
         for (let i = 0; i < cleanedData.filenames.length; i++) {
-            const path = cleanedData.path === '/'
-                ? `${cleanedData.path}${cleanedData.filenames[i]}`
-                : `${cleanedData.path}/${cleanedData.filenames[i]}`
-
+            const path = formatPath(cleanedData, 'filenames', i)
             await session.client.remove(path)
         }
 
@@ -144,7 +157,44 @@ exports.deleteFiles = async (request, response) => {
     }
 }
 
-exports.postCreateDirectory = async (request, response) => {
+exports.getDownloadFiles = async (request, response) => {
+    const validData = {
+        path: {
+            type: String,
+            required: false
+        },
+        filenames: {
+            type: Array,
+            required: true,
+            comparator(value) {
+                return value.every((val) => {
+                    return typeof val === 'string' || val instanceof String
+                })
+            },
+        }
+    }
+
+    const {sessionid} = request.headers
+
+    try {
+        const session = getSession(sessionid)
+        validData.path.default = await session.client.pwd()
+
+        const cleanedData = validateAndClean(validData, request.query)
+
+        response.setHeader('Content-Disposition', `attachment; filename="${cleanedData.filenames[0]}"`);
+        response.setHeader('Content-Type', 'application/octet-stream');
+        const writable = new ResponseWritable(response)
+
+        const path = formatPath(cleanedData, 'filenames', 0)
+
+        await session.client.downloadTo(writable, path)
+    } catch (error) {
+        response.status(403).send({msg: error.message})
+    }
+}
+
+exports.postCreateDirectories = async (request, response) => {
     const validData = {
         path: {
             type: String,

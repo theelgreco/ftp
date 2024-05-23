@@ -39,13 +39,15 @@
              @selectionmouseout="e => handleFileDeselect(e, file)">
           <template v-if="file.type === 2">
             <i class="mdi mdi-folder text-5xl text-blue-300"/>
-            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500">
+            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 text-[12px]">
               {{ file.name }}
             </p>
           </template>
           <template v-else-if="file.type === 1">
             <i class="mdi mdi-file text-5xl text-gray-300"/>
-            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500">{{ file.name }}</p>
+            <p class="text-ellipsis overflow-hidden max-w-[100%] text-gray-500 text-[12px]">
+              {{ file.name }}
+            </p>
           </template>
         </div>
       </div>
@@ -130,6 +132,7 @@ export default {
     },
     fileContextItems() {
       const items = [
+        {label: `Download (${this.selected.length} selected)`, icon: 'mdi mdi-download', action: this.downloadFiles},
         {label: 'Select all', icon: 'mdi mdi-select-all', action: this.selectAll},
       ]
 
@@ -158,7 +161,7 @@ export default {
       if (e) {
         e.stopPropagation()
         if (e.button === 2) return
-        if(e.button === 0 && this.$refs.menu.visible) this.$refs.menu.hide()
+        if (e.button === 0 && this.$refs.menu.visible) this.$refs.menu.hide()
       }
 
       if (!file && (e && !e.shiftKey)) {
@@ -237,6 +240,7 @@ export default {
         this.loading = true
 
         const {data} = await this.$http.get("/api/files", {params: {path}})
+        console.log(data)
 
         this.cwd = data.path
         this.files = data.files
@@ -292,6 +296,27 @@ export default {
       })
 
       console.log(data)
+    },
+    async downloadFiles(e) {
+      try {
+        const response = await this.$http.get("api/files/download", {
+          params: {filenames: this.selectedFilenames},
+          responseType: 'blob'
+        })
+        console.log(response)
+
+        const aElement = document.createElement('a');
+        const href = URL.createObjectURL(response.data);
+        aElement.href = href;
+
+        const filename = response.config.params.filenames[0];
+
+        aElement.setAttribute('download', filename);
+        aElement.click();
+        URL.revokeObjectURL(href);
+      } catch (err) {
+        console.error(err)
+      }
     },
     async goTo(path) {
       await router.push(`/files${path}`)
