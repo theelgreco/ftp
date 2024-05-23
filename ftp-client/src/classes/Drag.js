@@ -1,5 +1,6 @@
 export default class SelectionRect {
-    constructor() {
+    constructor(container = document.body) {
+        this.container = container
         this.selecting = false;
         this.top_left_x = 0;
         this.top_left_y = 0;
@@ -10,8 +11,9 @@ export default class SelectionRect {
         this.el = document.createElement("div");
         this.handleMouseMoveBound = this.handleMouseMove.bind(this);
         this.handleMouseUpBound = this.handleMouseUp.bind(this);
+        this.handleMouseOutBound = this.handleMouseUp.bind(this);
 
-        document.addEventListener("mousedown", this.init.bind(this));
+        this.container.addEventListener("mousedown", this.init.bind(this));
     }
 
     init(e) {
@@ -32,8 +34,9 @@ export default class SelectionRect {
 
             // this.toggleAll(e)
 
-            document.addEventListener("mousemove", this.handleMouseMoveBound);
-            document.addEventListener("mouseup", this.handleMouseUpBound);
+            this.container.addEventListener("mousemove", this.handleMouseMoveBound);
+            this.container.addEventListener("mouseup", this.handleMouseUpBound);
+            this.container.addEventListener("mouseleave", this.handleMouseOutBound)
         }
     }
 
@@ -41,8 +44,8 @@ export default class SelectionRect {
         const isSelecting = e.clientX > this.top_left_x + 5 || e.clientX < this.top_left_x - 5 || e.clientY > this.top_left_y + 5 || e.clientY < this.top_left_y - 5
 
         if (isSelecting) {
-            if (this.selecting && !document.body.contains(this.el)) {
-                document.body.appendChild(this.el);
+            if (this.selecting && !this.container.contains(this.el)) {
+                this.container.appendChild(this.el);
             }
 
             this.bottom_right_x = e.clientX;
@@ -90,11 +93,12 @@ export default class SelectionRect {
     handleMouseUp(e) {
         this.selecting = false;
 
-        if (document.body.contains(this.el)) {
-            document.body.removeChild(this.el);
+        if (this.container.contains(this.el)) {
+            this.container.removeChild(this.el);
         }
 
-        document.removeEventListener("mousemove", this.handleMouseMoveBound);
+        this.container.removeEventListener("mouseleave", this.handleMouseOutBound)
+        this.container.removeEventListener("mousemove", this.handleMouseMoveBound);
     }
 
     checkOverlap(element) {
@@ -114,7 +118,7 @@ export default class SelectionRect {
             // element.classList.add("selected");
             element.dispatchEvent(new Event("selectionmouseover"));
         } else {
-            if (!e.shiftKey) {
+            if (!e.shiftKey && element.classList.contains("selected")) {
                 // element.classList.remove("selected");
                 element.dispatchEvent(new Event("selectionmouseout"));
             }
@@ -122,7 +126,7 @@ export default class SelectionRect {
     }
 
     toggleAll(e) {
-        const items = document.querySelectorAll(".item");
+        const items = this.container.querySelectorAll(".item");
         items.forEach((item) => {
             this.toggleSelectedClass(item, e);
         });

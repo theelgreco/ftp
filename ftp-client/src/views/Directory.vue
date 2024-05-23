@@ -1,8 +1,8 @@
 <template>
-  <section class="section w-full h-full flex flex-col justify-center select-none" @click="selectSingleFile">
-    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] px-14 pt-6 pb-8 mx-auto border-1 border-gray-200 shadow-2xl
-                rounded-2xl relative flex flex-col gap-6">
-      <div class="sticky top-0 bg-[#f1f1f1] w-full">
+  <section class="section w-full h-full flex flex-col justify-center select-none">
+    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] mx-auto border-1 border-gray-200 shadow-2xl
+                rounded-2xl relative flex flex-col">
+      <div class="sticky top-0 bg-[#f1f1f1] w-full px-14 pt-6">
         <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
           <template #item="{ item }">
             <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
@@ -16,11 +16,14 @@
         <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
           <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
                       custom-upload @uploader="uploadFiles" class="pl-2 pr-3 text-[13px]" upload-icon="mdi mdi-upload"/>
-          <Button label="Create folder" icon="mdi mdi-plus"
+          <Button label="Create folder" icon="mdi mdi-plus" @click="showCreateFolder"
                   class="border-1 border-blue-500 text-blue-500 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"/>
         </div>
       </div>
-      <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto" @contextmenu="onRightClick">
+      <div v-if="files.length" class="flex flex-wrap gap-6 w-full h-full overflow-y-auto px-14 pt-6 pb-8"
+           ref="directory"
+           @mousedown="selectSingleFile"
+           @contextmenu="onRightClick">
         <div v-for="file in files" :key="file.name"
              class="item flex flex-col items-center text-center w-[23%] max-w-[100px] p-3 max-h-[100px] rounded
                     hover:bg-blue-50 transition"
@@ -29,7 +32,7 @@
              @contextmenu="e => onRightClick(e, file)"
              @doubletap="handleFileDoubleClick(file)"
              @dblclick="handleFileDoubleClick(file)"
-             @click="e => selectSingleFile(e, file)"
+             @mousedown="e => selectSingleFile(e, file)"
              @selectionmouseover="e => selectMultipleFiles(e, file, true)"
              @selectionmouseout="e => handleFileDeselect(e, file)">
           <template v-if="file.type === 2">
@@ -44,10 +47,11 @@
           </template>
         </div>
       </div>
-      <div v-else class="mx-auto text-center select-none pointer-events-none" @contextmenu="onRightClick">
+      <div v-else class="mx-auto text-center select-none pointer-events-none px-14 pt-8 pb-8"
+           @contextmenu="onRightClick">
         <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-file-10681491-8593307.png"
              style="width: 200px"/>
-        <p class="text-gray-400">No files in this directory</p>
+        <p class="text-gray-400">This folder is empty</p>
       </div>
     </div>
     <ContextMenu ref="menu" :model="fileContextItems">
@@ -66,8 +70,10 @@ import Button from "primevue/button";
 import Breadcrumb from "primevue/breadcrumb";
 import FileUpload from "primevue/fileupload";
 import ContextMenu from "primevue/contextmenu";
+
 import router from "@/router/index.js";
 import SelectionRect from "@/classes/Drag.js";
+import CreateFolderModal from "@/components/CreateFolderModal.vue";
 
 export default {
   name: "Directory",
@@ -83,6 +89,9 @@ export default {
       success: null,
       selected: [],
       cwd: null,
+      selectionRect: null,
+      metaKeyPressed: false,
+      aKeyPressed: false,
     }
   },
   computed: {
@@ -104,13 +113,18 @@ export default {
       return res
     },
     selectedFilenames() {
-      const res = []
-
-      this.selected.forEach((file) => {
-        res.push(file.name)
+      return this.selected.filter((file) => {
+        return file.type === 1
+      }).map((file) => {
+        return file.name
       })
-
-      return res
+    },
+    selectedFolderNames() {
+      return this.selected.filter((file) => {
+        return file.type === 2
+      }).map((file) => {
+        return file.name
+      })
     },
     fileContextItems() {
       const items = [
@@ -137,8 +151,10 @@ export default {
     selectSingleFile(e, file) {
       e.stopPropagation()
 
-      if (!file) {
+      if (!file && (e && !e.shiftKey)) {
         this.deselectAll()
+      } else if (e && e.shiftKey) {
+        this.selectMultipleFiles(e, file)
       } else {
         this.selected = [file]
       }
@@ -149,9 +165,7 @@ export default {
       }
     },
     handleFileDeselect(e, file) {
-      if (!file) {
-        this.deselectAll()
-      } else if (this.selected.includes(file)) {
+      if (this.selected.includes(file)) {
         const index = this.selected.findIndex((el) => el.name === file.name)
         this.selected = this.selected.toSpliced(index, 1)
       }
@@ -177,6 +191,30 @@ export default {
 
       this.$refs.menu.show(e)
     },
+    showCreateFolder() {
+      const dialogRef = this.$dialog.open(CreateFolderModal, {
+        props: {
+          header: 'Create new folder',
+          style: {
+            width: '400px'
+          },
+          breakpoints: {
+            '960px': '75vw',
+            '640px': '90vw'
+          },
+          modal: true,
+          dismissableMask: true,
+          blockScroll: true,
+          position: "center",
+          draggable: false,
+        },
+        emits: {
+          onCreated: () => {
+            dialogRef.close()
+          },
+        }
+      });
+    },
     async getFiles() {
       let hasError = null
       let isSuccessful = null
@@ -194,6 +232,11 @@ export default {
         isSuccessful = true
       } catch (err) {
         console.error(err)
+
+        if (err.response.data.msg === "That session does not exist!") {
+          await router.push("/connect")
+        }
+
         hasError = true
       } finally {
         this.loading = false
@@ -202,6 +245,8 @@ export default {
       }
     },
     async deleteFiles(e) {
+      console.log(this.selectedFilenames)
+      console.log(this.selectedFolderNames)
       try {
         const {data} = await this.$http.delete("api/files", {
           data: {
@@ -239,7 +284,39 @@ export default {
   async created() {
     await this.getFiles()
     this.$watch(() => this.$route.params.path, this.getFiles)
-    new SelectionRect()
+    window.addEventListener("keydown", (e) => {
+      e.stopPropagation()
+
+      if (e.key === "Meta") {
+        this.metaKeyPressed = true
+      }
+
+      if (e.key === "a") {
+        this.aKeyPressed = true
+      }
+
+      if (this.metaKeyPressed && this.aKeyPressed) {
+        this.selectAll()
+      }
+    })
+    window.addEventListener("keyup", (e) => {
+      e.stopPropagation()
+
+      if (e.key === "Meta") {
+        this.metaKeyPressed = false
+      }
+
+      if (e.key === "a") {
+        this.aKeyPressed = false
+      }
+    })
+  },
+  updated() {
+    this.$nextTick(() => {
+      if (!this.selectionRect && this.$refs.directory) {
+        this.selectionRect = new SelectionRect(this.$refs.directory)
+      }
+    })
   }
 }
 </script>
