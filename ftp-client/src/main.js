@@ -11,7 +11,7 @@ import PrimeVue from 'primevue/config';
 import DialogService from 'primevue/dialogservice';
 
 const baseAxios = axios.create({
-    baseURL: process.env.NODE_ENV === "development" ? "http://127.0.0.1:8080" : "",
+    baseURL: process.env.NODE_ENV === "production" ? "https://ftp-backend.vercel.app" : "http://127.0.0.1:8080"
 });
 
 const app = createApp(App)
