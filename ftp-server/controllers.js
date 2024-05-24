@@ -55,7 +55,7 @@ exports.postConnect = async (request, response) => {
         response.status(200).send({slug, timestamp, options})
     } catch (error) {
         console.error(error)
-        response.status(400).send({msg: error.message})
+        response.status(error.code ?? 400).send({msg: error.message})
     }
 }
 
@@ -80,7 +80,7 @@ exports.getFiles = async (request, response) => {
 
         response.status(200).send({files, path: cleanedData.path})
     } catch (error) {
-        response.status(403).send({msg: error.message})
+        response.status(error.code ?? 400).send({msg: error.message})
     }
 }
 
@@ -115,7 +115,7 @@ exports.postFiles = async (request, response) => {
         response.status(200).send({msg: `${files.length} files uploaded successfully to ${cleanedData.path}`})
     } catch (error) {
         console.error(error)
-        response.status(403).send({"msg": error.message})
+        response.status(error.code ?? 400).send({"msg": error.message})
     }
 }
 
@@ -146,14 +146,47 @@ exports.deleteFiles = async (request, response) => {
         const cleanedData = validateAndClean(validData, request.body)
 
         for (let i = 0; i < cleanedData.filenames.length; i++) {
-            const path = formatPath(cleanedData, 'filenames', i)
+            const path = formatPath(cleanedData, 'path', 'filenames', i)
             await session.client.remove(path)
         }
 
         response.status(200).send({msg: `${cleanedData.filenames.length} files removed successfully from ${cleanedData.path}`})
     } catch (error) {
         console.error(error)
-        response.status(400).send({msg: error.message})
+        response.status(error.code ?? 400).send({msg: error.message})
+    }
+}
+
+exports.postRenameFiles = async (request, response) => {
+    const validData = {
+        currentPath: {
+            type: String,
+            required: true,
+        },
+        newPath: {
+            type: String,
+            required: true,
+        },
+    }
+
+    const {sessionid} = request.headers
+
+    try {
+        const session = getSession(sessionid)
+        const cwd = await session.client.pwd()
+        validData.currentPath.default = cwd
+        validData.newPath.default = cwd
+
+        const cleanedData = validateAndClean(validData, request.body)
+
+        const {currentPath, newPath} = cleanedData
+
+        await session.client.rename(currentPath, newPath)
+
+        response.status(200).send({success: `${currentPath} renamed to ${newPath}`})
+    } catch (error) {
+        console.error(error)
+        response.status(error.code ?? 400).send({msg: error.message})
     }
 }
 
@@ -182,11 +215,11 @@ exports.getDownloadFiles = async (request, response) => {
 
         const writable = new ResponseWritable(response)
 
-        const path = formatPath(cleanedData, 'filename')
+        const path = formatPath(cleanedData, 'path', 'filename')
 
         await session.client.downloadTo(writable, path)
     } catch (error) {
-        response.status(403).send({msg: error.message})
+        response.status(error.code ?? 400).send({msg: error.message})
     }
 }
 
@@ -244,10 +277,7 @@ exports.deleteDirectories = async (request, response) => {
         const cleanedData = validateAndClean(validData, request.body)
 
         for (let i = 0; i < cleanedData.dirnames.length; i++) {
-            const path = cleanedData.path === '/'
-                ? `${cleanedData.path}${cleanedData.dirnames[i]}`
-                : `${cleanedData.path}/${cleanedData.dirnames[i]}`
-
+            const path = formatPath(cleanedData, 'path', 'dirnames', i)
             await session.client.removeDir(path)
         }
 
@@ -256,6 +286,6 @@ exports.deleteDirectories = async (request, response) => {
         })
     } catch (error) {
         console.error(error)
-        response.status(400).send({msg: error.message})
+        response.status(error.code ?? 400).send({msg: error.message})
     }
 }

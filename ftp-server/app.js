@@ -13,7 +13,7 @@ const {
     deleteFiles,
     getDownloadFiles,
     postCreateDirectories,
-    deleteDirectories
+    deleteDirectories, postRenameFiles
 } = require("./controllers")
 
 // setup
@@ -29,11 +29,17 @@ app.use(express.json())
 app.post("/api/connect", postConnect)
 
 app.get("/api/files", getFiles)
+
 app.post("/api/files", upload.array("files", 1000), postFiles)
+
 app.delete("/api/files", deleteFiles)
+
 app.get("/api/files/download", getDownloadFiles)
 
+app.post("/api/files/rename", postRenameFiles)
+
 app.post("/api/directories", postCreateDirectories)
+
 app.delete("/api/directories", deleteDirectories)
 
 app.listen(PORT, () => {
