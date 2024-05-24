@@ -130,7 +130,7 @@ exports.deleteFiles = async (request, response) => {
             required: true,
             comparator(value) {
                 return value.every((val) => {
-                    return typeof val === 'string' || val instanceof String
+                    return typeof val === "string" || val instanceof String
                 })
             },
         }
