@@ -1,6 +1,6 @@
-exports.formatPath = (data, key, index) => {
+exports.formatPath = (data, pathKey, nameKey, index) => {
     if (index >= 0) {
-        return data.path === '/' ? `${data.path}${data[key][index]}` : `${data.path}/${data[key][index]}`
+        return data[pathKey] === '/' ? `${data[pathKey]}${data[nameKey][index]}` : `${data[pathKey]}/${data[nameKey][index]}`
     }
-    return data.path === '/' ? `${data.path}${data[key]}` : `${data.path}/${data[key]}`
+    return data[pathKey] === '/' ? `${data[pathKey]}${data[nameKey]}` : `${data[pathKey]}/${data[nameKey]}`
 }
