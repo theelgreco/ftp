@@ -79,7 +79,13 @@ import ContextMenu from "primevue/contextmenu";
 
 import router from "@/router/index.js";
 import SelectionRect from "@/classes/Drag.js";
-import CreateFolderModal from "@/components/CreateFolderModal.vue";
+import CreateFolderModal from "@/components/modals/CreateFolderModal.vue";
+import RenameFileModal from "@/components/modals/RenameFileModal.vue";
+
+const typeLookup = {
+  1: "file",
+  2: "folder"
+}
 
 export default {
   name: "Directory",
@@ -103,7 +109,10 @@ export default {
   computed: {
     files() {
       if (this._files.length) {
-        return this._files.toSorted((a, b) => {
+        return this._files.map((file) => {
+          file.extension = this.getFileExtension(file.name)
+          return file
+        }).toSorted((a, b) => {
           return a.name.localeCompare(b.name)
         })
       }
@@ -148,9 +157,17 @@ export default {
 
       if (this.selected.length) {
         items.unshift({
-          label: `Delete (${this.selected.length} selected)`,
+          label: `Delete (${this.selected.length})`,
           icon: 'mdi mdi-delete',
           action: this.deleteFiles
+        })
+      }
+
+      if (this.selected.length === 1) {
+        items.unshift({
+          label: `Rename ${typeLookup[this.selected[0].type]}`,
+          icon: 'mdi mdi-pencil',
+          action: this.showRenameFile
         })
       }
 
@@ -236,9 +253,54 @@ export default {
           onCreated: (data) => {
             console.log(data)
             dialogRef.close()
+            window.location.reload()
           },
         }
       });
+    },
+    showRenameFile() {
+      const dialogRef = this.$dialog.open(RenameFileModal, {
+        props: {
+          header: `Rename ${typeLookup[this.selected[0].type]}`,
+          style: {
+            width: '400px'
+          },
+          breakpoints: {
+            '960px': '75vw',
+            '640px': '90vw'
+          },
+          modal: true,
+          dismissableMask: true,
+          blockScroll: true,
+          position: "center",
+          draggable: false,
+        },
+        data: {
+          filename: this.removeFileExtension(this.selected[0].name)
+        },
+        emits: {
+          onRename: async (data) => {
+            if (`${data}.${this.selected[0].extension}` !== this.selected[0].name) {
+              await this.renameFiles(data)
+            }
+            dialogRef.close()
+          },
+        }
+      });
+    },
+    getFileExtension(filename) {
+      return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+    },
+    removeFileExtension(filename) {
+      let extension = `${this.getFileExtension(filename)}`
+
+      if (extension) {
+        extension = `.${extension}`
+        const index = filename.lastIndexOf(extension)
+        return filename.slice(0, index)
+      }
+
+      return filename
     },
     async getFiles() {
       let hasError = null
@@ -288,6 +350,9 @@ export default {
           })
           console.log(data)
         }
+        if (this.selected.length) {
+          window.location.reload()
+        }
       } catch (err) {
         console.error(err)
       }
@@ -301,11 +366,16 @@ export default {
         form.append('files', file)
       })
 
-      const {data} = await this.$http.post('api/files', form, {
-        headers: {'Content-Type': 'multipart/form-data'}
-      })
+      try {
+        const {data} = await this.$http.post('api/files', form, {
+          headers: {'Content-Type': 'multipart/form-data'}
+        })
 
-      console.log(data)
+        console.log(data)
+        window.location.reload()
+      } catch (err) {
+        console.error(err)
+      }
     },
     async downloadFiles(e) {
       try {
@@ -332,6 +402,22 @@ export default {
           blob.aElement.click();
           URL.revokeObjectURL(blob.href);
         })
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    async renameFiles(newFilename, newLocation = "") {
+      const filename = this.selected[0].name
+      const extension = this.selected[0].extension
+
+      const currentPath = `${this.cwd}${filename}`
+      let newPath = `${this.cwd}${newLocation}${newFilename}`
+
+      if (extension) newPath = `${newPath}.${extension}`
+
+      try {
+        const {data} = await this.$http.post("api/files/rename", {currentPath, newPath})
+        window.location.reload()
       } catch (err) {
         console.error(err)
       }
