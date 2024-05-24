@@ -13,4 +13,4 @@ jobs:
 
     steps:
     - name: Make a GET request to deploy hook
-      run: curl -X GET {{secrets.API_DEPLOY_HOOK}}
+      run: curl -X GET ${{secrets.API_DEPLOY_HOOK}}
