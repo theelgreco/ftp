@@ -1,4 +1,3 @@
-const e = require("express");
 const {isBooleanable, boolean} = require("boolean")
 const validate = (validData, requestData) => {
     for (const key in validData) {
