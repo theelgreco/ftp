@@ -6,6 +6,7 @@ const cors = require("cors")
 const multer = require("multer")
 
 // local imports
+const {authenticateJWT} = require("./jwt/jwt");
 const {
     postConnect,
     getFiles,
@@ -14,7 +15,12 @@ const {
     getDownloadFiles,
     postCreateDirectories,
     deleteDirectories, postRenameFiles
-} = require("./controllers")
+} = require("./controllers/controllers")
+const {
+    handleCustomErrors,
+    handlePostgresErrors,
+    handle500Errors
+} = require("./errors/middleware");
 
 // setup
 const app = express()
@@ -24,6 +30,7 @@ const upload = multer({storage: multer.memoryStorage()})
 // middleware
 app.use(cors())
 app.use(express.json())
+app.use(authenticateJWT)
 
 // endpoints
 app.post("/api/connect", postConnect)
@@ -41,6 +48,11 @@ app.post("/api/files/rename", postRenameFiles)
 app.post("/api/directories", postCreateDirectories)
 
 app.delete("/api/directories", deleteDirectories)
+
+// error-handling middleware
+app.use(handleCustomErrors)
+app.use(handlePostgresErrors)
+app.use(handle500Errors)
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)

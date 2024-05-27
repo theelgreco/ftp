@@ -1,5 +1,5 @@
 const {v4: uuidv4} = require("uuid")
-const {access} = require("./ftp.js")
+const {access} = require("./ftp/ftp.js")
 
 sessions = {}
 

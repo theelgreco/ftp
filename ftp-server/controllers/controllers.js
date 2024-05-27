@@ -1,22 +1,7 @@
 const {validateAndClean} = require("./validation.js")
-const {createSession, getSession} = require("./sessions.js")
-const {Readable, Writable} = require("stream")
-const {formatPath} = require("./helpers");
-
-class ResponseWritable extends Writable {
-    constructor(response) {
-        super();
-        this.response = response;
-    }
-
-    _write(chunk, encoding, callback) {
-        this.response.write(chunk, encoding, callback);
-    }
-
-    _final(callback) {
-        this.response.end(callback);
-    }
-}
+const {createSession, getSession} = require("../sessions.js")
+const {Readable} = require("stream")
+const {formatPath, ResponseWritable} = require("./utils");
 
 exports.postConnect = async (request, response) => {
     const validData = {
