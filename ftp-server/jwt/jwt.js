@@ -1,3 +1,6 @@
+const jwt = require("jsonwebtoken")
+const {UnauthorisedError, ForbiddenError} = require("../errors/classes");
+
 exports.authenticateJWT = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -11,6 +14,8 @@ exports.authenticateJWT = (req, res, next) => {
             if (err) {
                 throw new ForbiddenError("Invalid JWT provided")
             }
+
+            console.log(user)
 
             req.user = user;
             next();

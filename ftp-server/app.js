@@ -1,4 +1,6 @@
 require('dotenv').config()
+require('./db/connect')
+require('./db/initialise')()
 
 // module imports
 const express = require('express')
@@ -55,5 +57,5 @@ app.use(handlePostgresErrors)
 app.use(handle500Errors)
 
 app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`)
+    console.log(`Listening on port ${PORT}.`)
 })
