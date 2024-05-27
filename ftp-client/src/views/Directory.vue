@@ -151,7 +151,7 @@ export default {
     },
     fileContextItems() {
       const items = [
-        {label: `Download (${this.selected.length} selected)`, icon: 'mdi mdi-download', action: this.downloadFiles},
+        {label: `Download (${this.selected.length})`, icon: 'mdi mdi-download', action: this.downloadFiles},
         {label: 'Select all', icon: 'mdi mdi-select-all', action: this.selectAll},
       ]
 
