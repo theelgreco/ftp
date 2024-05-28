@@ -1,7 +1,7 @@
 const {Client} = require("basic-ftp")
 
 const access = async (options) => {
-    const client = new Client(30000)
+    const client = new Client()
 
     try {
         await client.access(options)

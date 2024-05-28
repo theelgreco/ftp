@@ -15,7 +15,7 @@ import Button from "primevue/button";
 
 export default {
   name: "CreateFolderModal",
-  emits: ["created"],
+  emits: ["create"],
   components: {InputText, Button},
   data() {
     return {
@@ -25,12 +25,7 @@ export default {
   methods: {
     async createFolder() {
       if (this.value) {
-        try {
-          const {data} = await this.$http.post("api/directories", {path: this.value})
-          this.$emit("created", data)
-        } catch (err) {
-          console.error(err)
-        }
+        this.$emit("create", this.value)
       }
     }
   }

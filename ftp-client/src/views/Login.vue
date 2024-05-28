@@ -1,7 +1,7 @@
 <template>
-  <section class="section w-full h-full flex flex-col justify-center select-none">
+  <div class="w-full h-full flex flex-col justify-center">
     <div
-        class="form md:w-[550px] md:p-16 w-[90%] p-14 mx-auto border-1 border-gray-200 shadow-2xl rounded-2xl overflow-y-auto relative max-h-[90%]">
+        class="form sm:w-[550px] xs:p-16 w-[90%] p-10 mx-auto border-1 border-gray-200 shadow-2xl rounded-2xl overflow-y-auto relative max-h-[90%]">
       <h1 class="w-fit text-2xl font-bold text-center">Welcome</h1>
       <form class="flex flex-col gap-8 mt-12">
         <div class="flex flex-col gap-1">
@@ -13,7 +13,7 @@
           <input id="password" type="password" autocomplete="current-password" class="p-1.5 rounded"
                  v-model="form.password"/>
         </div>
-        <div class="w-full flex flex-col gap-4">
+        <div class="w-full flex flex-col gap-4 mt-6">
           <button
               class="border-1 border-blue-500 hover:bg-blue-100 active:bg-blue-200 transition rounded py-3 px-8 text-blue-500 mx-auto w-full"
               @click="handleLoginClick">
@@ -51,10 +51,12 @@
       <!--          </p>-->
       <!--        </div>-->
     </div>
-  </section>
+  </div>
 </template>
 
 <script>
+import router from "@/router/index.js";
+
 export default {
   name: "SignUp",
   data() {
@@ -87,6 +89,7 @@ export default {
         const {data} = await this.$auth.post("login", {...this.form, service: "ftp"})
         const {jwt} = data
         localStorage.setItem("jwt", jwt)
+        await router.push("dashboard")
       } catch (err) {
         console.error(err)
       }
@@ -96,12 +99,6 @@ export default {
 </script>
 
 <style scoped>
-.section {
-  background-color: #f1f1f1;
-  background-image: radial-gradient(rgba(59, 130, 246, 1) 0.9500000000000001px, #f1f1f1 0.9500000000000001px);
-  background-size: 19px 19px;
-}
-
 .form {
   background-color: #f1f1f1;
 }
