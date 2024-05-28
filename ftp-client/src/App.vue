@@ -12,7 +12,7 @@ export default {
   created() {
     const sessionId = sessionStorage.getItem("sessionId")
     if (!sessionId) {
-      router.push("connect")
+      router.push("sign-up")
     } else {
       this.$http.defaults.headers.common = {
         sessionId
