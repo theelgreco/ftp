@@ -1,4 +1,6 @@
 const {Writable} = require("stream");
+const bcrypt = require("bcrypt")
+
 exports.formatPath = (data, pathKey, nameKey, index) => {
     if (index >= 0) {
         return data[pathKey] === '/' ? `${data[pathKey]}${data[nameKey][index]}` : `${data[pathKey]}/${data[nameKey][index]}`
@@ -19,4 +21,12 @@ exports.ResponseWritable = class extends Writable {
     _final(callback) {
         this.response.end(callback);
     }
+}
+
+exports.hashPassword = async (password) => {
+    return await bcrypt.hash(password, 10)
+}
+
+exports.verifyPassword = async (passwordAttempt, storedPassword) => {
+    return await bcrypt.compare(passwordAttempt, storedPassword);
 }

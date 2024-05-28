@@ -1,9 +1,21 @@
-const {validateAndClean} = require("./validation.js")
-const {createSession, getSession} = require("../sessions.js")
 const {Readable} = require("stream")
-const {formatPath, ResponseWritable} = require("./utils");
 
-exports.postConnect = async (request, response) => {
+const {validateAndClean} = require("./validation.js")
+const {formatPath, ResponseWritable, hashPassword} = require("./utils");
+const {getUserServers, createServer} = require("../models/models");
+
+exports.getServers = async (request, response, next) => {
+    const {user} = request
+
+    try {
+        const servers = await getUserServers(user.slug)
+        response.status(200).send({results: servers})
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.postServers = async (request, response, next) => {
     const validData = {
         host: {
             type: String,
@@ -32,19 +44,26 @@ exports.postConnect = async (request, response) => {
         }
     }
 
+    const {user: requestUser} = request
+
     try {
         const cleanedData = validateAndClean(validData, request.body)
+        let {host, port, user, password, secure} = cleanedData
 
-        const {slug, timestamp, options} = await createSession(cleanedData)
+        // password = await hashPassword(password)
 
-        response.status(200).send({slug, timestamp, options})
+        // const {slug, timestamp, options} = await createSession(cleanedData)
+
+        const server = await createServer(host, port, user, password, secure, requestUser.slug)
+        response.status(200).send(server)
+
+        // response.status(200).send({slug, timestamp, options})
     } catch (error) {
-        console.error(error)
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }
 
-exports.getFiles = async (request, response) => {
+exports.getFiles = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
@@ -52,59 +71,48 @@ exports.getFiles = async (request, response) => {
         }
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-        validData.path.default = await session.client.pwd()
+        // validData.path.default = await request.ftpClient.pwd()
 
         const cleanedData = validateAndClean(validData, request.query)
 
-        await session.client.cd(cleanedData.path)
-        const files = await session.client.list(cleanedData.path)
+        await request.ftpClient.cd(cleanedData.path)
+        const files = await request.ftpClient.list(cleanedData.path)
 
         response.status(200).send({files, path: cleanedData.path})
     } catch (error) {
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }
 
-exports.postFiles = async (request, response) => {
+exports.postFiles = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
-            required: false
+            required: true
         }
     }
 
-    const {sessionid} = request.headers
-    const {files} = request
-
     try {
-        const session = getSession(sessionid)
+        const cleanedData = validateAndClean(validData, {path: request.body.path})
 
-        validData.path.default = await session.client.pwd()
+        for (let i = 0; i < request.files.length; i++) {
+            const file = request.files[i]
 
-        const cleanedData = validateAndClean(validData, request.body)
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i]
-
-            const path = `${cleanedData.path}/${file.originalname}`
+            const path = `${cleanedData.path}${file.originalname}`
 
             const readable = Readable.from(file.buffer)
 
-            await session.client.uploadFrom(readable, path)
+            await request.ftpClient.uploadFrom(readable, path)
         }
 
-        response.status(200).send({msg: `${files.length} files uploaded successfully to ${cleanedData.path}`})
+        response.status(200).send({msg: `${request.files.length} files uploaded successfully to ${cleanedData.path}`})
     } catch (error) {
-        console.error(error)
-        response.status(error.code ?? 400).send({"msg": error.message})
+        next(error)
     }
 }
 
-exports.deleteFiles = async (request, response) => {
+exports.deleteFiles = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
@@ -121,28 +129,21 @@ exports.deleteFiles = async (request, response) => {
         }
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-
-        validData.path.default = await session.client.pwd()
-
         const cleanedData = validateAndClean(validData, request.body)
 
         for (let i = 0; i < cleanedData.filenames.length; i++) {
             const path = formatPath(cleanedData, 'path', 'filenames', i)
-            await session.client.remove(path)
+            await request.ftpClient.remove(path)
         }
 
         response.status(200).send({msg: `${cleanedData.filenames.length} files removed successfully from ${cleanedData.path}`})
     } catch (error) {
-        console.error(error)
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }
 
-exports.postRenameFiles = async (request, response) => {
+exports.postRenameFiles = async (request, response, next) => {
     const validData = {
         currentPath: {
             type: String,
@@ -154,28 +155,24 @@ exports.postRenameFiles = async (request, response) => {
         },
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-        const cwd = await session.client.pwd()
-        validData.currentPath.default = cwd
-        validData.newPath.default = cwd
+        // const cwd = await request.ftpClient.pwd()
+        // validData.currentPath.default = cwd
+        // validData.newPath.default = cwd
 
         const cleanedData = validateAndClean(validData, request.body)
 
         const {currentPath, newPath} = cleanedData
 
-        await session.client.rename(currentPath, newPath)
+        await request.ftpClient.rename(currentPath, newPath)
 
         response.status(200).send({success: `${currentPath} renamed to ${newPath}`})
     } catch (error) {
-        console.error(error)
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }
 
-exports.getDownloadFiles = async (request, response) => {
+exports.getDownloadFiles = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
@@ -187,12 +184,7 @@ exports.getDownloadFiles = async (request, response) => {
         }
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-        validData.path.default = await session.client.pwd()
-
         const cleanedData = validateAndClean(validData, request.query)
 
         response.setHeader('Content-Disposition', `attachment; filename="${cleanedData.filename}"`);
@@ -202,13 +194,13 @@ exports.getDownloadFiles = async (request, response) => {
 
         const path = formatPath(cleanedData, 'path', 'filename')
 
-        await session.client.downloadTo(writable, path)
+        await request.ftpClient.downloadTo(writable, path)
     } catch (error) {
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }
 
-exports.postCreateDirectories = async (request, response) => {
+exports.postCreateDirectories = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
@@ -216,26 +208,18 @@ exports.postCreateDirectories = async (request, response) => {
         },
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-
-        validData.path.default = await session.client.pwd()
-
         const cleanedData = validateAndClean(validData, request.body)
 
-        await session.client.ensureDir(cleanedData.path)
-        await session.client.cd(validData.path.default)
+        await request.ftpClient.ensureDir(cleanedData.path)
 
         response.status(200).send({msg: `Directory ${cleanedData.path} created successfully.`})
     } catch (error) {
-        console.error(error)
-        response.status(400).send(error.message)
+        next(error)
     }
 }
 
-exports.deleteDirectories = async (request, response) => {
+exports.deleteDirectories = async (request, response, next) => {
     const validData = {
         path: {
             type: String,
@@ -252,25 +236,20 @@ exports.deleteDirectories = async (request, response) => {
         }
     }
 
-    const {sessionid} = request.headers
-
     try {
-        const session = getSession(sessionid)
-
-        validData.path.default = await session.client.pwd()
+        // validData.path.default = await request.ftpClient.pwd()
 
         const cleanedData = validateAndClean(validData, request.body)
 
         for (let i = 0; i < cleanedData.dirnames.length; i++) {
             const path = formatPath(cleanedData, 'path', 'dirnames', i)
-            await session.client.removeDir(path)
+            await request.ftpClient.removeDir(path)
         }
 
         response.status(200).send({
             msg: `${cleanedData.dirnames.length} directories removed successfully from ${cleanedData.path}`
         })
     } catch (error) {
-        console.error(error)
-        response.status(error.code ?? 400).send({msg: error.message})
+        next(error)
     }
 }

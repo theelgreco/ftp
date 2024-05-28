@@ -1,5 +1,8 @@
 <template>
-  <section class="section w-full h-full flex flex-col justify-center select-none">
+  <Button label="Dashboard" icon="mdi mdi-chevron-left"
+          @click="router.push('/dashboard')"
+          class="absolute top-5 left-5 shadow-xl py-2 pl-1 pr-3 bg-[#f1f1f1] border-1 border-blue-500"/>
+  <div class="w-full h-full flex flex-col justify-center">
     <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] mx-auto border-1 border-gray-200 shadow-2xl
                 rounded-2xl relative flex flex-col">
       <div class="sticky top-0 bg-[#f1f1f1] w-full px-6 sm:px-14 pt-6">
@@ -68,7 +71,7 @@
         </div>
       </template>
     </ContextMenu>
-  </section>
+  </div>
 </template>
 
 <script>
@@ -96,6 +99,7 @@ export default {
       home: {
         icon: 'mdi mdi-home'
       },
+      server: null,
       loading: null,
       error: null,
       success: null,
@@ -172,6 +176,9 @@ export default {
       }
 
       return items
+    },
+    router(){
+      return router
     }
   },
   methods: {
@@ -250,8 +257,8 @@ export default {
           draggable: false,
         },
         emits: {
-          onCreated: (data) => {
-            console.log(data)
+          onCreate: async (data) => {
+            await this.createFolder(data)
             dialogRef.close()
             window.location.reload()
           },
@@ -311,7 +318,7 @@ export default {
       try {
         this.loading = true
 
-        const {data} = await this.$http.get("/api/files", {params: {path}})
+        const {data} = await this.$http.get(`api/servers/${this.server}/files`, {params: {path}})
         console.log(data)
 
         this.cwd = data.path
@@ -320,11 +327,6 @@ export default {
         isSuccessful = true
       } catch (err) {
         console.error(err)
-
-        if (err.response.data.msg === "That session does not exist!") {
-          await router.push("/connect")
-        }
-
         hasError = true
       } finally {
         this.loading = false
@@ -335,16 +337,18 @@ export default {
     async deleteFiles(e) {
       try {
         if (this.selectedFilenames.length) {
-          const {data} = await this.$http.delete("api/files", {
+          const {data} = await this.$http.delete(`api/servers/${this.server}/files`, {
             data: {
+              path: this.cwd,
               filenames: this.selectedFilenames
             }
           })
           console.log(data)
         }
         if (this.selectedFolderNames.length) {
-          const {data} = await this.$http.delete("api/directories", {
+          const {data} = await this.$http.delete(`api/servers/${this.server}/directories`, {
             data: {
+              path: this.cwd,
               dirnames: this.selectedFolderNames
             }
           })
@@ -366,8 +370,10 @@ export default {
         form.append('files', file)
       })
 
+      form.append('path', this.cwd)
+
       try {
-        const {data} = await this.$http.post('api/files', form, {
+        const {data} = await this.$http.post(`api/servers/${this.server}/files`, form, {
           headers: {'Content-Type': 'multipart/form-data'}
         })
 
@@ -382,8 +388,8 @@ export default {
         const blobs = []
 
         for (let i = 0; i < this.selectedFilenames.length; i++) {
-          const response = await this.$http.get("api/files/download", {
-            params: {filename: this.selectedFilenames[i]},
+          const response = await this.$http.get(`api/servers/${this.server}/files/download`, {
+            params: {filename: this.selectedFilenames[i], path: this.cwd},
             responseType: 'blob'
           })
 
@@ -416,21 +422,33 @@ export default {
       if (extension) newPath = `${newPath}.${extension}`
 
       try {
-        const {data} = await this.$http.post("api/files/rename", {currentPath, newPath})
+        const {data} = await this.$http.post(`api/servers/${this.server}/files/rename`, {currentPath, newPath})
         window.location.reload()
       } catch (err) {
         console.error(err)
       }
     },
+    async createFolder(folderName) {
+      try {
+        const {data} = await this.$http.post(`api/servers/${this.server}/directories`,
+            {
+              path: `${this.cwd}${folderName}`
+            }
+        )
+      } catch (err) {
+        console.error(err)
+      }
+    },
     async goTo(path) {
-      await router.push(`/files${path}`)
+      await router.push(`/${this.server}${path}`)
     },
     async goForward(directory) {
       const newRoute = this.getPathString()
-      await router.push(`/files${newRoute}${directory}`)
+      await router.push(`/${this.server}${newRoute}${directory}`)
     },
   },
   async created() {
+    this.server = this.$route.params.server
     await this.getFiles()
     this.$watch(() => this.$route.params.path, this.getFiles)
     window.addEventListener("keydown", (e) => {
@@ -472,12 +490,6 @@ export default {
 
 
 <style lang="postcss" scoped>
-.section {
-  background-color: #f1f1f1;
-  background-image: radial-gradient(rgba(59, 130, 246, 1) 0.9500000000000001px, #f1f1f1 0.9500000000000001px);
-  background-size: 19px 19px;
-}
-
 .content {
   background-color: #f1f1f1;
 }

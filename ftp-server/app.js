@@ -10,19 +10,25 @@ const multer = require("multer")
 // local imports
 const {authenticateJWT} = require("./jwt/jwt");
 const {
-    postConnect,
+    getServers,
+    postServers,
     getFiles,
     postFiles,
     deleteFiles,
     getDownloadFiles,
     postCreateDirectories,
-    deleteDirectories, postRenameFiles
+    deleteDirectories,
+    postRenameFiles
 } = require("./controllers/controllers")
 const {
     handleCustomErrors,
     handlePostgresErrors,
     handle500Errors
 } = require("./errors/middleware");
+const {
+    ftpClose,
+    ftpConnect
+} = require("./ftp/middleware");
 
 // setup
 const app = express()
@@ -35,21 +41,25 @@ app.use(express.json())
 app.use(authenticateJWT)
 
 // endpoints
-app.post("/api/connect", postConnect)
+app.get("/api/servers", getServers)
 
-app.get("/api/files", getFiles)
+app.post("/api/servers", postServers)
 
-app.post("/api/files", upload.array("files", 1000), postFiles)
+app.get("/api/servers/:server/files", ftpConnect, getFiles)
 
-app.delete("/api/files", deleteFiles)
+app.post("/api/servers/:server/files", ftpConnect, upload.array("files", 1000), postFiles)
 
-app.get("/api/files/download", getDownloadFiles)
+app.delete("/api/servers/:server/files", ftpConnect, deleteFiles)
 
-app.post("/api/files/rename", postRenameFiles)
+app.get("/api/servers/:server/files/download", ftpConnect, getDownloadFiles)
 
-app.post("/api/directories", postCreateDirectories)
+app.post("/api/servers/:server/files/rename", ftpConnect, postRenameFiles)
 
-app.delete("/api/directories", deleteDirectories)
+app.post("/api/servers/:server/directories", ftpConnect, postCreateDirectories)
+
+app.delete("/api/servers/:server/directories", ftpConnect, deleteDirectories)
+
+app.use(ftpClose)
 
 // error-handling middleware
 app.use(handleCustomErrors)

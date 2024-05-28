@@ -32,3 +32,10 @@ exports.ForbiddenError = class extends Error {
         this.name = "ForbiddenError";
     }
 }
+
+exports.NotFoundError = class extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "NotFoundError";
+    }
+}

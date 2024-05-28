@@ -9,6 +9,8 @@ exports.handleCustomErrors = (error, request, response, next) => {
         response.status(401).send({[name]: message})
     } else if (name === "ForbiddenError") {
         response.status(403).send({[name]: message})
+    } else if(name === "NotFoundError") {
+        response.status(404).send({[name]: message})
     } else {
         next(error)
     }
@@ -19,5 +21,5 @@ exports.handlePostgresErrors = (error, request, response, next) => {
 }
 
 exports.handle500Errors = (request, response) => {
-    response.status(500).send({msg: "Internal server error"})
+    // response.status(500).send({msg: "Internal server error"})
 }
