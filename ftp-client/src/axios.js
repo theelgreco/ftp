@@ -13,7 +13,7 @@ api.interceptors.response.use(
         // Any status codes that falls outside the range of 2xx cause this function to trigger
         if (error.response && error.response.status === 401) {
             // If the error status is 401 (Unauthorized), redirect to the login page
-            await router.push({name: 'login'});
+            await router.push('/login');
         }
 
         return Promise.reject(error);

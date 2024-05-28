@@ -110,10 +110,10 @@ export default {
       }
     },
     handleAddServerClick() {
-      router.push("connect")
+      router.push("/add-server")
     },
     connect(serverSlug){
-      router.push(`${serverSlug}/`)
+      router.push(`/${serverSlug}/`)
     }
   },
   created() {

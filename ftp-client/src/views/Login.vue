@@ -89,7 +89,7 @@ export default {
         const {data} = await this.$auth.post("login", {...this.form, service: "ftp"})
         const {jwt} = data
         localStorage.setItem("jwt", jwt)
-        await router.push("dashboard")
+        await router.push("/dashboard")
       } catch (err) {
         console.error(err)
       }

@@ -15,7 +15,7 @@ export default {
     const jwt = localStorage.getItem("jwt")
 
     if (!jwt) {
-      await router.push("login")
+      await router.push("/login")
     } else {
       this.$http.defaults.headers.common = {
         "Authorization": `Bearer ${jwt}`
