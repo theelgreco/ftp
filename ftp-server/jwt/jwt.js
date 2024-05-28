@@ -12,7 +12,7 @@ exports.authenticateJWT = (req, res, next) => {
 
         jwt.verify(token, process.env.JWT_KEY, (err, user) => {
             if (err) {
-                throw new ForbiddenError("Invalid JWT provided")
+                throw new UnauthorisedError("Invalid JWT provided")
             }
 
             console.log(user)
