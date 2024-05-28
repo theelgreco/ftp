@@ -9,13 +9,14 @@ import DynamicDialog from "primevue/dynamicdialog";
 
 export default {
   components: {DynamicDialog},
-  created() {
-    const sessionId = sessionStorage.getItem("sessionId")
-    if (!sessionId) {
-      router.push("sign-up")
+  async created() {
+    const jwt = localStorage.getItem("jwt")
+
+    if (!jwt) {
+      await router.push("login")
     } else {
       this.$http.defaults.headers.common = {
-        sessionId
+        jwt
       }
     }
   }

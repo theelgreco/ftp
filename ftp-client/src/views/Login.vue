@@ -2,7 +2,7 @@
   <section class="section w-full h-full flex flex-col justify-center select-none">
     <div
         class="form md:w-[550px] md:p-16 w-[90%] p-14 mx-auto border-1 border-gray-200 shadow-2xl rounded-2xl overflow-y-auto relative max-h-[90%]">
-      <h1 class="w-fit mx-auto text-2xl font-bold text-center">Sign up</h1>
+      <h1 class="w-fit text-2xl font-bold text-center">Welcome</h1>
       <form class="flex flex-col gap-8 mt-12">
         <div class="flex flex-col gap-1">
           <label for="email" class="text-gray-400">Email address</label>
