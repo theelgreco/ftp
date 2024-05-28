@@ -45,7 +45,7 @@
               <div class="flex mt-5">
                 <Button label="Delete"
                         class="text-blue-500 text-[13px] hover:underline"
-                        @click=""/>
+                        @click="deleteServer(server.slug)"/>
                 <Button label="Connect"
                         class="border-1 border-blue-500 text-blue-500 pl-3 py-2 pr-2 text-[13px] hover:bg-blue-50 active:bg-blue-100 ml-auto"
                         icon="mdi mdi-chevron-right"
@@ -97,6 +97,7 @@ export default {
       loading: false,
       error: false,
       success: false,
+      serverToDelete: null,
     }
   },
   methods: {
@@ -104,8 +105,15 @@ export default {
       try {
         const {data} = await this.$http.get("api/servers")
         this.servers = data.results
-        console.log(this.servers)
       } catch (err) {
+        console.error(err)
+      }
+    },
+    async deleteServer(serverSlug){
+      try {
+        await this.$http.delete(`api/servers/${serverSlug}`)
+        window.location.reload()
+      } catch (err){
         console.error(err)
       }
     },

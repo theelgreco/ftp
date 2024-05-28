@@ -48,7 +48,7 @@ exports.getServer = async (userSlug, serverSlug) => {
             SELECT *
             FROM ftp_connections
             WHERE user_slug = $1
-            AND slug = $2;
+              AND slug = $2;
         `, [userSlug, serverSlug])
 
         return serversRows.rows[0]
@@ -65,6 +65,19 @@ exports.createServer = async (host, port, user, password, secure, user_slug) => 
         `, [crypto.randomUUID(), host, port, user, password, secure, user_slug])
 
         return server.rows[0]
+    } catch (err) {
+        throw err
+    }
+}
+
+exports.deleteServer = async (userSlug, serverSlug) => {
+    try {
+        const deletedRow = await db.query(`
+            DELETE
+            FROM ftp_connections
+            WHERE user_slug = $1
+              AND slug = $2;
+        `, [userSlug, serverSlug])
     } catch (err) {
         throw err
     }

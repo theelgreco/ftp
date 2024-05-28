@@ -18,7 +18,8 @@ const {
     getDownloadFiles,
     postCreateDirectories,
     deleteDirectories,
-    postRenameFiles
+    postRenameFiles,
+    deleteServer
 } = require("./controllers/controllers")
 const {
     handleCustomErrors,
@@ -44,6 +45,8 @@ app.use(authenticateJWT)
 app.get("/api/servers", getServers)
 
 app.post("/api/servers", postServers)
+
+app.delete("/api/servers/:server", deleteServer)
 
 app.get("/api/servers/:server/files", ftpConnect, getFiles)
 

@@ -67,7 +67,7 @@ export default {
 
         isSuccessful = true
 
-        router.push("/dashboard")
+        await router.push("/dashboard")
       } catch (err) {
         console.error(err)
         hasError = true
