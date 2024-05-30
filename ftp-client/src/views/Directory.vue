@@ -1,40 +1,37 @@
 <template>
-  <Button label="Dashboard" icon="mdi mdi-chevron-left"
-          @click="router.push('/dashboard')"
-          class="absolute top-5 left-5 shadow-xl py-2 pl-1 pr-3 bg-[#f1f1f1] border-1 border-blue-500"/>
-  <div class="w-full h-full flex flex-col justify-center">
-    <div class="content md:w-[90%] w-[90%] max-h-[90%] min-h-[50%] mx-auto border-1 border-gray-200 shadow-2xl
-                rounded-2xl relative flex flex-col">
-      <div class="sticky top-0 bg-[#f1f1f1] w-full px-6 sm:px-14 pt-6">
-        <Breadcrumb :home="home" :model="items" class="bg-[#f1f1f1] breadcrumb pb-3 w-full px-0">
-          <template #item="{ item }">
-            <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
-              <i class="mdi mdi-home"/>
-            </div>
-            <div v-else class="cursor-pointer text-gray-400" @mousedown="goTo(item.path)">
-              {{ item.label }}
-            </div>
-          </template>
-        </Breadcrumb>
-        <div class="bg-[#f1f1f1] breadcrumb w-full px-0 pt-3 pb-4 flex flex-wrap gap-3">
-          <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
-                      custom-upload class="pl-2 pr-3 text-[13px] w-full" upload-icon="mdi mdi-upload"
-                      @uploader="uploadFiles"/>
-          <Button label="Create folder"
-                  class="border-1 border-blue-500 text-blue-500 flex-grow sm:flex-grow-0 pl-2 py-2 pr-3 text-[13px] hover:bg-blue-100"
-                  icon="mdi mdi-plus"
-                  @click="showCreateFolder"/>
-        </div>
+  <FloatingCard>
+    <template v-slot:header>
+      <Breadcrumb :home="home" :model="items" class="bg-off-white dark:text-white dark:bg-gray-800 pb-3 sm:pt-0 w-full px-0">
+        <template #item="{ item }">
+          <div v-if="item.icon" class="cursor-pointer" @mousedown="goTo('/')">
+            <i class="mdi mdi-home"/>
+          </div>
+          <div v-else class="cursor-pointer text-gray-400" @mousedown="goTo(item.path)">
+            {{ item.label }}
+          </div>
+        </template>
+      </Breadcrumb>
+      <div class="bg-off-white dark:bg-gray-800 w-full px-0 pt-3 flex flex-wrap gap-3">
+        <FileUpload mode="basic" name="files" :multiple="true" choose-label="Upload file" :auto="true"
+                    custom-upload class="pl-2 pr-3 text-[13px] w-full" upload-icon="mdi mdi-upload"
+                    @uploader="uploadFiles"/>
+        <Button label="Create folder"
+                class="border-1 border-blue-500 text-blue-500 flex-grow sm:flex-grow-0 pl-2 py-2 pr-3 text-[13px]
+                         hover:bg-blue-100 dark:hover:bg-gray-900 dark:active:bg-gray-950"
+                icon="mdi mdi-plus"
+                @click="showCreateFolder"/>
       </div>
+    </template>
+    <template v-slot:content>
       <div v-if="files.length"
            class="flex sm:flex-wrap sm:flex-row flex-nowrap flex-col gap-3 sm:gap-6 w-full h-full overflow-y-auto
-                  px-4 sm:px-14 pt-6 pb-8"
+                  px-3 pt-3 pb-8 dark:bg-gray-800 rounded-b-2xl select-none"
            ref="directory"
            @mousedown="selectSingleFile"
            @contextmenu="onRightClick">
         <div v-for="file in files" :key="file.name"
              class="item flex flex-row sm:flex-col items-center text-center rounded gap-3 sm:gap-0 h-fit w-full
-                    sm:aspect-square sm:w-[23%] sm:max-w-[100px] p-3 hover:bg-blue-50 transition"
+                    sm:aspect-square sm:w-[23%] sm:max-w-[100px] p-3 hover:bg-blue-50 transition dark:hover:bg-gray-700"
              :class="{selected: selected.includes(file)}"
              :title="file.name"
              @contextmenu="e => onRightClick(e, file)"
@@ -44,7 +41,8 @@
              @selectionmouseout="e => handleFileDeselect(e, file)">
           <template v-if="file.type === 2">
             <i class="mdi mdi-folder text-3xl sm:text-5xl text-blue-300"/>
-            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 sm:text-[12px] whitespace-nowrap">
+            <p class="overflow-hidden text-ellipsis max-w-[100%] text-gray-500 dark:text-white sm:text-[12px]
+                      whitespace-nowrap">
               {{ file.name }}
             </p>
           </template>
@@ -56,22 +54,22 @@
           </template>
         </div>
       </div>
-      <div v-else class="mx-auto text-center select-none pointer-events-none px-6 sm:px-14 pt-8 pb-8"
+      <div v-else class="mx-auto text-center select-none pointer-events-none px-6 sm:px-14 pt-8 pb-8 dark:bg-gray-800"
            @contextmenu="onRightClick">
         <img src="https://cdni.iconscout.com/illustration/premium/thumb/no-file-10681491-8593307.png"
-             style="width: 200px"/>
+             style="width: 200px" alt="no-files"/>
         <p class="text-gray-400">This folder is empty</p>
       </div>
-    </div>
-    <ContextMenu ref="menu" :model="fileContextItems" class="select-none">
-      <template #item="{ item, props }">
-        <div class="p-2 flex gap-2 cursor-pointer" @click="item.action">
-          <i :class="item.icon"/>
-          <p class="text-gray-500">{{ item.label }}</p>
-        </div>
-      </template>
-    </ContextMenu>
-  </div>
+    </template>
+  </FloatingCard>
+  <ContextMenu ref="menu" :model="fileContextItems" class="select-none">
+    <template #item="{ item, props }">
+      <div class="p-2 flex gap-2 cursor-pointer" @click="item.action">
+        <i :class="item.icon"/>
+        <p class="text-gray-500">{{ item.label }}</p>
+      </div>
+    </template>
+  </ContextMenu>
 </template>
 
 <script>
@@ -84,6 +82,7 @@ import router from "@/router/index.js";
 import SelectionRect from "@/classes/Drag.js";
 import CreateFolderModal from "@/components/modals/CreateFolderModal.vue";
 import RenameFileModal from "@/components/modals/RenameFileModal.vue";
+import FloatingCard from "@/components/FloatingCard.vue";
 
 const typeLookup = {
   1: "file",
@@ -92,7 +91,7 @@ const typeLookup = {
 
 export default {
   name: "Directory",
-  components: {Breadcrumb, FileUpload, ContextMenu, Button},
+  components: {FloatingCard, Breadcrumb, FileUpload, ContextMenu, Button},
   data() {
     return {
       _files: [],
@@ -177,9 +176,6 @@ export default {
 
       return items
     },
-    router(){
-      return router
-    }
   },
   methods: {
     getPathString(atIndex) {
@@ -319,7 +315,6 @@ export default {
         this.loading = true
 
         const {data} = await this.$http.get(`api/servers/${this.server}/files`, {params: {path}})
-        console.log(data)
 
         this.cwd = data.path
         this._files = data.files
@@ -490,16 +485,8 @@ export default {
 
 
 <style lang="postcss" scoped>
-.content {
-  background-color: #f1f1f1;
-}
-
-.breadcrumb {
-  box-shadow: 0 2px 0 0 #e7e7e7;
-}
-
 .selected {
-  @apply bg-blue-100;
+  @apply bg-blue-100 dark:bg-gray-600;
 }
 
 .p-fileupload {

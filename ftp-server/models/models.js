@@ -76,8 +76,10 @@ exports.deleteServer = async (userSlug, serverSlug) => {
             DELETE
             FROM ftp_connections
             WHERE user_slug = $1
-              AND slug = $2;
+              AND slug = $2
+            RETURNING *;
         `, [userSlug, serverSlug])
+        return deletedRow.rows
     } catch (err) {
         throw err
     }

@@ -11,16 +11,16 @@ exports.authenticateJWT = (req, res, next) => {
             throw new UnauthorisedError("No JWT provided")
         }
 
-        jwt.verify(token, process.env.JWT_KEY, async (err, user) => {
+        jwt.verify(token, process.env.JWT_KEY, async (err, JWT) => {
             if (err) {
                 throw new UnauthorisedError("Invalid JWT provided")
             }
 
             try {
-                req.user = await getUser(user.user_id);
+                req.user = await getUser(JWT.user_id);
 
                 if (!req.user) {
-                    req.user = await createUser(user.user_id);
+                    req.user = await createUser(JWT.user_id);
                 }
 
                 next();

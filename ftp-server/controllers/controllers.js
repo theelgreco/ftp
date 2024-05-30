@@ -4,6 +4,10 @@ const {validateAndClean} = require("./validation.js")
 const {formatPath, ResponseWritable, hashPassword} = require("./utils");
 const {getUserServers, createServer, deleteServer} = require("../models/models");
 
+exports.validateJWT = async (request, response) => {
+    response.status(200).send({msg: "Your JWT is valid"})
+}
+
 exports.getServers = async (request, response, next) => {
     const {user} = request
 
