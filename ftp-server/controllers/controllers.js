@@ -2,7 +2,11 @@ const {Readable} = require("stream")
 
 const {validateAndClean} = require("./validation.js")
 const {formatPath, ResponseWritable, hashPassword} = require("./utils");
-const {getUserServers, createServer} = require("../models/models");
+const {getUserServers, createServer, deleteServer} = require("../models/models");
+
+exports.validateJWT = async (request, response) => {
+    response.status(200).send({msg: "Your JWT is valid"})
+}
 
 exports.getServers = async (request, response, next) => {
     const {user} = request
@@ -58,6 +62,15 @@ exports.postServers = async (request, response, next) => {
         response.status(200).send(server)
 
         // response.status(200).send({slug, timestamp, options})
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.deleteServer = async (request, response, next) => {
+    try {
+        await deleteServer(request.user.slug, request.params.server)
+        response.status(204).send({msg: "OK"})
     } catch (error) {
         next(error)
     }

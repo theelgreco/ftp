@@ -9,6 +9,18 @@
     @tailwind utilities;
 }
 
+@layer components {
+    .dotted-bg {
+        background-image: radial-gradient(rgba(59, 130, 246, 1) 0.9500000000000001px, #f1f1f1 0.9500000000000001px);
+        background-size: 19px 19px;
+    }
+
+    .dotted-bg-dark {
+        background-image: radial-gradient(rgba(59, 130, 246, 1) 0.9500000000000001px, rgb(31 41 55 / 100%) 0.9500000000000001px);
+        background-size: 19px 19px;
+    }
+}
+
 body {
     background-color: #f1f1f1;
     color: #393939;

@@ -1,8 +1,8 @@
 <template>
   <div class="w-full h-full flex flex-col justify-center">
-    <div
-        class="form sm:w-[550px] xs:p-16 w-[90%] p-10 mx-auto border-1 border-gray-200 shadow-2xl rounded-2xl overflow-y-auto relative max-h-[90%]">
-      <h1 class="w-fit text-2xl font-bold text-center">Welcome</h1>
+    <div class="form sm:w-[550px] xs:p-16 w-[90%] p-10 mx-auto border-1 border-gray-200 dark:border-gray-600 shadow-2xl
+                rounded-2xl overflow-y-auto max-h-[90%] bg-off-white dark:bg-gray-800">
+      <h1 class="w-fit text-2xl font-bold text-center dark:text-white">Welcome</h1>
       <form class="flex flex-col gap-8 mt-12">
         <div class="flex flex-col gap-1">
           <label for="email" class="text-gray-400">Email address</label>
@@ -15,12 +15,14 @@
         </div>
         <div class="w-full flex flex-col gap-4 mt-6">
           <button
-              class="border-1 border-blue-500 hover:bg-blue-100 active:bg-blue-200 transition rounded py-3 px-8 text-blue-500 mx-auto w-full"
+              class="border-1 border-blue-500 hover:bg-blue-100 active:bg-blue-200 transition rounded py-3 px-8
+                     text-blue-500 mx-auto w-full dark:hover:bg-gray-900 dark:active:bg-gray-950"
               @click="handleLoginClick">
             Login
           </button>
           <button
-              class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 transition rounded py-3 px-8 text-white mx-auto flex-grow w-full"
+              class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 transition rounded py-3 px-8 text-white mx-auto
+                     flex-grow w-full"
               @click="handleSignUpClick">
             Sign up
           </button>
@@ -88,9 +90,32 @@ export default {
       try {
         const {data} = await this.$auth.post("login", {...this.form, service: "ftp"})
         const {jwt} = data
+
         localStorage.setItem("jwt", jwt)
-        await router.push("dashboard")
+        this.$http.defaults.headers.common = {
+          "Authorization": `Bearer ${jwt}`
+        }
+
+        await router.push("/dashboard")
       } catch (err) {
+        console.error(err)
+      }
+    }
+  },
+  async created() {
+    const jwt = localStorage.getItem("jwt")
+
+    if (jwt) {
+      this.$http.defaults.headers.common = {
+        "Authorization": `Bearer ${jwt}`
+      }
+
+      try {
+        await this.$http.get("api/validateJWT")
+        await router.push("/dashboard")
+      } catch (err) {
+        this.$http.defaults.headers.common.Authorization = ""
+        localStorage.removeItem("jwt")
         console.error(err)
       }
     }
@@ -98,14 +123,8 @@ export default {
 }
 </script>
 
-<style scoped>
-.form {
-  background-color: #f1f1f1;
-}
-</style>
-
 <style lang="scss">
 @use "three-dots" with (
-$dot-color: rgba(59, 130, 246, 1)
+  $dot-color: rgba(59, 130, 246, 1)
 );
 </style>
