@@ -2,7 +2,7 @@ import axios from "axios";
 import router from "@/router/index.js";
 
 export const api = axios.create({
-    baseURL: process.env.NODE_ENV === "production" ? "https://ftp-l4ir.onrender.com" : "http://127.0.0.1:8080"
+    baseURL: process.env.NODE_ENV === "production" ? "https://ftp-l4ir.onrender.com" : "http://127.0.0.1:8080",
 });
 
 api.interceptors.response.use(
@@ -13,7 +13,7 @@ api.interceptors.response.use(
         // Any status codes that falls outside the range of 2xx cause this function to trigger
         if (error.response && error.response.status === 401) {
             // If the error status is 401 (Unauthorized), redirect to the login page
-            await router.push('/login');
+            await router.push("/login");
         }
 
         return Promise.reject(error);
@@ -21,5 +21,5 @@ api.interceptors.response.use(
 );
 
 export const auth = axios.create({
-    baseURL: process.env.NODE_ENV === "production" ? "https://auth-server-602v.onrender.com" : "http://127.0.0.1:9091"
+    baseURL: process.env.NODE_ENV === "production" ? "https://auth-server-602v.onrender.com" : "http://127.0.0.1:9090",
 });
