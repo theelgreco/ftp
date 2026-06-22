@@ -7,3 +7,4 @@
 *.vscode
 */.gitignore
 *.DS_Store
+.idea
